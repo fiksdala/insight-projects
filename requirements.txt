@@ -7,3 +7,9 @@ Sphinx
 coverage
 awscli
 flake8
+pandas
+numpy
+matplotlib
+seaborn
+sklearn
+xgboost
