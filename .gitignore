@@ -87,3 +87,6 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# Messy code work
+/hospice-project/data/messy.py

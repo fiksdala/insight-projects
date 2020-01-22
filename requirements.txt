@@ -13,3 +13,4 @@ matplotlib
 seaborn
 sklearn
 xgboost
+psycopg2
