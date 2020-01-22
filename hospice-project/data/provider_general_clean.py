@@ -32,5 +32,5 @@ own_cert.head()
 #%%
 # pickle subset
 pickle.dump(own_cert[['ccn', 'Ownership Type', 'days_operation']],
-            open('provider_general.pickle', 'wb'))
+            open('data/interim/provider_general.pickle', 'wb'))
 
