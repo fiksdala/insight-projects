@@ -21,21 +21,21 @@ provider_all.drop(columns=['Address Line 2', 'PhoneNumber',
                       'Start Date', 'End Date'], inplace=True)
 
 # convert to wide format, rename and keep ccn, address, measure code, and score
-provider_all.rename(columns={'CMS Certification Number (CCN)': 'cnn'},
+provider_all.rename(columns={'CMS Certification Number (CCN)': 'ccn'},
                inplace=True)
-measures = ['cnn', 'Measure Code', 'Score']
+measures = ['ccn', 'Measure Code', 'Score']
 provider_measures = provider_all[measures].pivot(
-    index='cnn',
+    index='ccn',
     columns='Measure Code',
     values='Score'
 )
 
-ids = ['cnn', 'Facility Name', 'Address Line 1', 'City',
+ids = ['ccn', 'Facility Name', 'Address Line 1', 'City',
             'State', 'Zip Code', 'County Name']
 provider_wide = pd.merge(
     provider_all[ids].drop_duplicates(),
     provider_measures,
-    on='cnn'
+    on='ccn'
 )
 
 #%% checks
@@ -96,22 +96,13 @@ provider_wide.loc[provider_wide.lat_long=='None','lat_long'] = [
     countyll_dict[i] if i in countyll_dict.keys() else np.nan
     for i in np.array(county_state)[provider_wide.lat_long=='None']]
 
-# Convert 'Not Available' to np.nan
+# Convert 'Not Available' and '*' to np.nan
 provider_wide.replace('Not Available', np.nan, inplace=True)
+provider_wide.replace('*', np.nan, inplace=True)
+provider_wide.replace('Less than 11', np.nan, inplace=True)
 
 #%%
-# Define float variables and recode targets (all float except '<11'
-lt11_recodes = ['Pct_Pts_w_Cancer', 'Pct_Pts_w_Circ_Heart_Disease',
-                'Pct_Pts_w_Dementia', 'Pct_Pts_w_Resp_Disease',
-                'Pct_Pts_w_Stroke'
-                ]
-
-# Recode lt11 vars to 5
-provider_wide[lt11_recodes] = provider_wide[lt11_recodes].replace(
-    'Less than 11', 5
-)
-
-# All floats
+# Define float variables
 provider_floats = ['Average_Daily_Census', 'H_001_01_OBSERVED',
                    'H_002_01_OBSERVED', 'H_003_01_OBSERVED',
                    'H_004_01_OBSERVED', 'H_005_01_OBSERVED',
@@ -125,8 +116,9 @@ provider_floats = ['Average_Daily_Census', 'H_001_01_OBSERVED',
 provider_wide[provider_floats] = provider_wide[provider_floats].astype(float)
 
 #%%
-# make cnn str
-provider_wide['cnn'] = provider_wide['cnn'].astype(str)
+# drop leading 0s in ccn
+provider_wide['ccn'] = [i[1:] if i[0]=='0' else i
+                        for i in provider_wide.ccn.astype(str)]
 
 #%%
 # Pickle pre-processed

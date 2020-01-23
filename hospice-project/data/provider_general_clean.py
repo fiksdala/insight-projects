@@ -27,7 +27,7 @@ own_cert['days_operation'] = [
 ]
 
 #%%
-own_cert.head()
+own_cert['ccn'] = [i[1:] if i[0]=='0' else i for i in own_cert['ccn']]
 
 #%%
 # pickle subset
