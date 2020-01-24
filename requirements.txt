@@ -14,3 +14,4 @@ seaborn
 sklearn
 xgboost
 psycopg2
+streamlit

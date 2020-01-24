@@ -52,6 +52,26 @@ m0 <- lmer(neg_rec ~ Ownership.Type +
            REML=T)
 summary(m0)
 
+m1 <- lmer(neg_rec ~ percRuralZipBen +
+             percSOSinpatientHospice +
+             EMO_REL_BBV +
+             RESPECT_BBV +
+             RESPECT_TBV +
+             SYMPTOMS_BBV +
+             TEAM_COMM_BBV +
+             TEAM_COMM_MBV +
+             TEAM_COMM_TBV +
+             TIMELY_CARE_BBV +
+             TIMELY_CARE_TBV +
+             TRAINING_BBV +
+             distinctBens 
+             + (1|State),
+           data=df[sample(nrow(df), 1630),],
+           REML=T)
+summary(m1)
+
+saveRDS(m1, 'data/interim/mvp_model.rds')
+
 f_K_fold <- function(Nobs,K=5){
   rs <- runif(Nobs)
   id <- seq(Nobs)[order(rs)]
@@ -95,7 +115,10 @@ lmer_kfold = function(df, call, n_folds){
        test=list(rmse=rmse_train_out, mse=mse_train_out, mae=mae_train_out))
 }
 
-kfold_results = lmer_kfold(df, summary(m0)$call, 10)
+kfold_results = lmer_kfold(df, summary(m1)$call, 10)
 
-mean(kfold_results$train$mae)
-mean(kfold_results$test$mae)
+mean(kfold_results$train$rmse)
+mean(kfold_results$test$rmse)
+
+plot(m1)
+

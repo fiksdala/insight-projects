@@ -1,0 +1,1 @@
+web: streamlit run senti-mentor.py --server.port $PORT --browser.serverAddress https://senti-mentor.herokuapp.com
