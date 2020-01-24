@@ -1,0 +1,1 @@
+web: streamlit run hospice-project/senti-mentor.py --server.port $PORT --browser.serverAddress https://senti-mentor.herokuapp.com

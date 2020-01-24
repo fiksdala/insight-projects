@@ -1,0 +1,5 @@
+sentimentor
+pandas
+numpy
+sklearn
+plotly
