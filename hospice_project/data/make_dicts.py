@@ -1,5 +1,43 @@
 import pickle
 
+cahps_dict = {
+    "TEAM_COMM_TBV": "The hospice team always communicated well",
+    "TIMELY_CARE_BBV": "The hospice team sometimes or never provided timely help",
+    "SYMPTOMS_BBV": "The patient sometimes or never got the help they needed for pain and symptoms",
+    "RATING_BBV": "Caregivers rated the hospice agency a 6 or lower",
+    "TEAM_COMM_MBV": "The hospice team usually  communicated well",
+    "RESPECT_TBV": "The hospice team always treated the patient with respect",
+    "RECOMMEND_TBV": "YES, they would definitely recommend the hospice",
+    "EMO_REL_TBV": "The hospice team provided the right amount of emotional and spiritual support",
+    "SYMPTOMS_MBV": "The patient usually got the help they needed for pain and symptoms",
+    "TEAM_COMM_BBV": "The hospice team sometimes or never communicated well",
+    "TRAINING_BBV": "They did not receive the training they needed",
+    "RECOMMEND_MBV": "YES, they would probably recommend the hospice",
+    "SYMPTOMS_TBV": "The patient always got the help they needed for pain and symptoms",
+    "RESPECT_MBV": "The hospice team usually treated the patient with respect",
+    "TIMELY_CARE_TBV": "The hospice team always provided timely help",
+    "RATING_TBV": "Caregivers rated the hospice agency a 9 or 10",
+    "TRAINING_MBV": "They somewhat received the training they needed",
+    "EMO_REL_BBV": "The hospice team did |not| provide the right amount of emotional and spiritual support",
+    "RECOMMEND_BBV": "NO, they would probably not or definitely not recommend the hospice",
+    "RESPECT_BBV": "The hospice team sometimes or never treated the patient with respect",
+    "RATING_MBV": "Caregivers rated the hospice agency a 7 or 8",
+    "TIMELY_CARE_MBV": "The hospice team usually provided timely help",
+    "TRAINING_TBV": "They definitely received the training they needed"
+}
+
+provider_dict = {
+    "H_001_01_OBSERVED": "Hospice and Palliative Care Treatment Preferences",
+    "H_002_01_OBSERVED": "Beliefs & Values Addressed (if desired by the patient)",
+    "H_003_01_OBSERVED": "Hospice and Palliative Care Pain Screening",
+    "H_004_01_OBSERVED": "Hospice and Palliative Care Pain Assessment",
+    "H_005_01_OBSERVED": "Hospice and Palliative Care Dyspnea Screening",
+    "H_006_01_OBSERVED": "Hospice and Palliative Care Dyspnea Treatment",
+    "H_007_01_OBSERVED": "Patient Treated with an Opioid Who Are Given a Bowel Regimen",
+    "H_008_01_OBSERVED": "Hospice and Palliative Care Composite Process Measure",
+    "H_009_01_OBSERVED": "Hospice Visits When Death Is Imminent, Measure 1"
+}
+
 puf_dict = {
 "distinctBens": "Distinct Beneficiaries",
 "epStayCt": "Episode or Stay Count",
@@ -96,4 +134,7 @@ puf_dict = {
 "percDaysHospRHC": "Percent of Days in Hospice RHC"
 }
 
+pickle.dump(cahps_dict, open('data/interim/cahps_dict.pickle', 'wb'))
+pickle.dump(provider_dict, open('data/interim/provider_dict.pickle', 'wb'))
 pickle.dump(puf_dict, open('data/interim/puf_dict.pickle', 'wb'))
+

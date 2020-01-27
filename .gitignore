@@ -89,5 +89,5 @@ target/
 .mypy_cache/
 
 # Messy code work
-/hospice-project/data/messy.py
+/hospice_project/data/messy.py
 .Rproj.user
