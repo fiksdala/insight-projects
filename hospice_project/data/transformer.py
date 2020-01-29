@@ -7,18 +7,17 @@ from sklearn.preprocessing import StandardScaler
 #%%
 # Must scale continuous only
 class MyScaler(BaseEstimator, TransformerMixin):
-    def __init__(self,
-                 dummy_vars=None):
-        self.dummy_vars = dummy_vars
+    def __init__(self, dont_scale=None):
+        self.dont_scale = dont_scale
         self.scaler = StandardScaler()
 
     def fit(self, X, y=None):
-        if self.dummy_vars is not None:
+        if self.dont_scale is not None:
             self.scaler.fit(X[[i for i in X.columns
-                               if i not in self.dummy_vars]])
+                               if i not in self.dont_scale]])
             self.colnames_ = [i for i in X.columns
-                              if i not in self.dummy_vars] + [
-                i for i in X.columns if i in self.dummy_vars
+                              if i not in self.dont_scale] + [
+                i for i in X.columns if i in self.dont_scale
             ]
         else:
             self.scaler.fit(X)
@@ -26,16 +25,17 @@ class MyScaler(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None, **fit_params):
-        if self.dummy_vars is not None:
+        if self.dont_scale is not None:
             X_scaled = self.scaler.transform(
-                X[[i for i in X.columns if i not in self.dummy_vars]]
+                X[[i for i in X.columns if i not in self.dont_scale]]
             )
             output = np.concatenate([X_scaled,
                                      X[[i for i in X.columns
-                                        if i in self.dummy_vars]]
+                                        if i in self.dont_scale]]
                                      ], axis=1)
         else:
             output = self.scaler.transform(X)
 
         return pd.DataFrame(output,
                             columns=self.colnames_)
+

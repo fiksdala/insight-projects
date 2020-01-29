@@ -5,7 +5,7 @@ import pickle
 initial_df = pd.read_pickle('data/interim/merged_df.pickle')
 initial_df['ccn'].duplicated().sum()
 
-#%% Feature Engineering
+#Feature Engineering
 
 #%% N facilities in 30, 60, 90 mile radius and min dist
 latlongs = initial_df.loc[~initial_df.lat_long.isna(),
@@ -69,7 +69,8 @@ cp_vars = [
 ]
 initial_df[cp_vars] = initial_df[cp_vars].fillna('Missing')
 
-#%% Race simple impute
+#%% Race adjust: make non-white % to deal with large % missing issue
+# and fill nan to 0 if total > 95
 race_vars = ["percWhite",
 "percBlack",
 "percAsian",
@@ -85,6 +86,17 @@ initial_df.loc[
     initial_df[race_vars].sum(axis=1) > 95,
     race_vars
 ].fillna(0)
+
+initial_df['percNonwhite'] = 100-initial_df['percWhite']
+
+#%% Make H/L Ratio Vars for CAHPS items
+tbvs = [i for i in initial_df.columns if 'TBV' in i]
+bbvs = [i for i in initial_df.columns if 'BBV' in i]
+btr_vars = []
+for var in range(len(tbvs)):
+    btr = tbvs[var][:-3]+'BTR'
+    initial_df[btr] = initial_df[bbvs[var]] / initial_df[tbvs[var]]
+    btr_vars.append(btr)
 
 #%% Varlists
 cat_vars = [
@@ -110,7 +122,8 @@ drop_levels = ['Ownership Type_For-Profit',
                'Care_Provided_Skilled_Nursing_Missing',
                'Care_Provided_other_locations_Missing',
                'Provided_Home_Care_and_other_Missing',
-               'Provided_Home_Care_only_Missing'
+               'Provided_Home_Care_only_Missing',
+               'Care_Provided_Inpatient_Hospital_Missing'
                ]
 
 reference_level_dict = dict(zip(cat_vars[1:],
@@ -324,6 +337,7 @@ explore_vars_initial = [
 "percHisp",
 "percNative",
 "percOther",
+    'percNonwhite',
 "aveNurseMin7dp",
 "aveSocialWork7dp",
 "aveHomeHealth7dp",
@@ -364,7 +378,15 @@ explore_vars_initial = [
     'Provided_Home_Care_and_other_Yes',
        'Provided_Home_Care_only_Missing',
     'Provided_Home_Care_only_No',
-       'Provided_Home_Care_only_Yes'
+       'Provided_Home_Care_only_Yes',
+'EMO_REL_BTR',
+ 'RATING_BTR',
+ 'RECOMMEND_BTR',
+ 'RESPECT_BTR',
+ 'SYMPTOMS_BTR',
+ 'TEAM_COMM_BTR',
+ 'TIMELY_CARE_BTR',
+ 'TRAINING_BTR'
 ]
 
 # Make dict of variable information

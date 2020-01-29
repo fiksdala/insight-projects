@@ -53,6 +53,8 @@ merged_df = pd.concat([merged_df[~merged_df['ccn'].duplicated(keep=False)],
 #%%
 # Observations must have name and location
 merged_df = merged_df[~merged_df['State'].isna()]
+# Reset index from merges and cuts
+merged_df.reset_index(drop=True, inplace=True)
 merged_df.to_pickle('data/interim/merged_df.pickle')
 
 #%%

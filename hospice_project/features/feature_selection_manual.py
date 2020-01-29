@@ -22,39 +22,33 @@ p_evals = ['H_001_01_OBSERVED',
  'H_007_01_OBSERVED',
  'H_008_01_OBSERVED',
  'H_009_01_OBSERVED',
- 'EMO_REL_BBV',
- 'EMO_REL_TBV',
- 'RATING_BBV',
- 'RATING_TBV',
  'RECOMMEND_BBV',
  'RECOMMEND_TBV',
- 'RESPECT_BBV',
- 'RESPECT_TBV',
- 'SYMPTOMS_BBV',
- 'SYMPTOMS_TBV',
- 'TEAM_COMM_BBV',
- 'TEAM_COMM_TBV',
- 'TIMELY_CARE_BBV',
- 'TIMELY_CARE_TBV',
- 'TRAINING_BBV',
- 'TRAINING_TBV'
+ 'EMO_REL_BTR',
+ 'RATING_BTR',
+ 'RECOMMEND_BTR',
+ 'RESPECT_BTR',
+ 'SYMPTOMS_BTR',
+ 'TEAM_COMM_BTR',
+ 'TIMELY_CARE_BTR',
+ 'TRAINING_BTR'
            ]
 
 # H_ vars do not correlate highly with survey bin vars
-plt.figure(figsize=(15,10))
-sns.heatmap(X_train[p_evals].astype(float).corr())
-plt.show()
+# plt.figure(figsize=(15,10))
+# sns.heatmap(X_train[p_evals].astype(float).corr())
+# plt.show()
 
 # Particularly high (>.85) with ratings and emo
-p_evals_cor = X_train[p_evals].astype(float).corr().to_numpy()
-np.fill_diagonal(p_evals_cor, 0)
-plt.figure(figsize=(15,10))
-sns.heatmap(pd.DataFrame(
- np.abs(p_evals_cor) > .85,
- columns=p_evals,
- index=p_evals
-).iloc[9:,9:])
-plt.show()
+# p_evals_cor = X_train[p_evals].astype(float).corr().to_numpy()
+# np.fill_diagonal(p_evals_cor, 0)
+# plt.figure(figsize=(15,10))
+# sns.heatmap(pd.DataFrame(
+#  np.abs(p_evals_cor) > .85,
+#  columns=p_evals,
+#  index=p_evals
+# ).iloc[9:,9:])
+# plt.show()
 
 # p_evals_keep: drop emo_tbv and ratings
 p_evals_keep = [i for i in p_evals
@@ -99,14 +93,15 @@ p_demo = ['percWhite',
  'percNative',
  'percOther']
 
-for i in p_demo:
-    X_train[i].plot(kind='hist')
-    plt.show()
+# for i in p_demo:
+#     X_train[i].plot(kind='hist')
+#     plt.show()
 
 # Keep White/Black/Hisp for most variation
 p_demo_keep = ['percWhite',
  'percBlack',
- 'percHisp']
+ 'percHisp',
+               'percNonwhite']
 
 #%% Provider Services Delivered
 p_services_delivered = ['percBen7orFewerDays',
@@ -131,16 +126,16 @@ p_services_delivered = ['percBen7orFewerDays',
  'physicianCtPB'
 ]
 
-plt.figure(figsize=(15,10))
-sns.heatmap(X_train[p_services_delivered].corr())
-plt.show()
+# plt.figure(figsize=(15,10))
+# sns.heatmap(X_train[p_services_delivered].corr())
+# plt.show()
 
 p_serv_del_corr = X_train[p_services_delivered].corr().to_numpy()
 np.fill_diagonal(p_serv_del_corr,0)
 
-plt.figure(figsize=(15,10))
-sns.heatmap(p_serv_del_corr)
-plt.show()
+# plt.figure(figsize=(15,10))
+# sns.heatmap(p_serv_del_corr)
+# plt.show()
 
 #%%
 # 7/30 + and 60/180 - cor, keep 30 and 180
@@ -155,10 +150,10 @@ p_services_delivered_keep = [i for i in p_services_delivered
                              ]]
 
 # Check variation of remaining and drop low variance vars
-for var in p_services_delivered_keep:
-    print(var)
-    X_train[var].plot(kind='hist', title=var)
-    plt.show()
+# for var in p_services_delivered_keep:
+#     print(var)
+#     X_train[var].plot(kind='hist', title=var)
+#     plt.show()
 
 #%% drop nurse, percSOSinpatientHospice, percSOSinpatient,
 # percSOSskilledNurse, health 7dp
@@ -173,13 +168,19 @@ p_services_delivered_keep = [i for i in p_services_delivered_keep
 p_finances = ['totalMedStandPayPB',
               'tot_med_PB']
 
+#%%
+p_evals_keep
+
 #%% Combine keep to prep for random forest feature selection
-keep_vars = p_evals_keep + prov_serv_offered_keep \
+keep_vars = p_evals_keep + prov_serv_offered_keep + p_demo_keep \
             + p_services_delivered_keep + p_finances
+
+#%%
+keep_vars
 
 
 #%% Save keep_vars for use later
 
-pickle.dump(keep_vars, open('data/processed/keep_vars.pickle', 'wb'))
+X_train['aveNurseMin7dp']
 
 
