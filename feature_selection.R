@@ -57,7 +57,7 @@ dim(df_val)
 
 # val rmse comparison
 val_rmse = c()
-
+df_train$RECOMMEND_BBV
 lm_perceptions = lm(RECOMMEND_BBV ~
                       H_002_01_OBSERVED +
                       EMO_REL_BTR +
@@ -171,14 +171,14 @@ val_rmse['lmer_all'] = rmse(df_val$RECOMMEND_BBV,
 # Patient Perceptions
 lmer_perceptions = lmer(RECOMMEND_BBV ~
                    # H_001_01_OBSERVED +
-                   H_002_01_OBSERVED +
+                   # H_002_01_OBSERVED +
                    # H_003_01_OBSERVED +
                    # H_004_01_OBSERVED +
                    # H_005_01_OBSERVED +
                    # H_006_01_OBSERVED +
                    # H_007_01_OBSERVED +
                    # H_008_01_OBSERVED +
-                   # H_009_01_OBSERVED +
+                   H_009_01_OBSERVED +
                    EMO_REL_BTR +
                    RESPECT_BTR +
                    SYMPTOMS_BTR +
@@ -394,6 +394,7 @@ lmer_imp_features = lmer(RECOMMEND_BBV ~
                            data=df_train)
 
 summary(lmer_imp_features)
+vif(lmer_imp_features)
 rmse(df_val$RECOMMEND_BBV, 
      predict(lmer_imp_features, df_val))
 val_rmse['lmer_care_delivered'] = rmse(df_val$RECOMMEND_BBV, 
@@ -408,4 +409,35 @@ kfold_results_all = lmer_kfold(df_full_train,
                                summary(lmer_full)$call, 5)
 mean(kfold_results_all$test$rmse)
 
+################################################################################
+# Let's try some other stuff
 
+rslopes = lmer(RECOMMEND_BBV ~
+                 H_002_01_OBSERVED *
+                 EMO_REL_BTR *
+                 RESPECT_BTR *
+                 SYMPTOMS_BTR *
+                 TEAM_COMM_BTR *
+                 TIMELY_CARE_BTR *
+                 TRAINING_BTR *
+                 percBlack *
+                 percHisp *
+                 percBen30orFewerDays *
+                 percSOSDassisLiv *
+                 nurseVisitCtPB *
+                 socialWorkCtPB *
+                 physicianCtPB *
+                 totalMedStandPayPB *
+                 Care_Provided_Assisted_Living_Yes *
+                 Care_Provided_Home_Yes *
+                 Care_Provided_Inpatient_Hospice_Yes *
+                 Care_Provided_Skilled_Nursing_Yes +
+                 (1|State),
+               data=df_train)
+
+summary(rslopes)
+rmse(df_val$RECOMMEND_BBV, 
+     predict(rslopes, df_val))
+kfold_results_rslopes = lmer_kfold(df_full_train, 
+                               summary(rslopes)$call, 5)
+mean(kfold_results_rslopes$test$rmse)
