@@ -51,4 +51,4 @@ olsM = sm.OLS(ols_y, X).fit()
 olsM.bse* np.sqrt(X.shape[0])
 
 #%%
-ols_y
+olsM.params
