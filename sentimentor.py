@@ -29,6 +29,25 @@ ols_object = pickle.load(open('ols_obj.pickle', 'rb'))
 # Dependent Variable
 dv = 'RECOMMEND_BBV'
 
+var_names = ['Skilled Nursing (Yes)',
+'Inpatient Hospice (Yes)',
+'Home Care (Yes)',
+'Assisted Living (Yes)',
+'Medicare Pmts per Beneficiary',
+'Physician Visit Ct. per Beneficiary',
+'Social Work Visit Ct. per Beneficiary',
+'Nurse Visit Ct. per Beneficiary',
+'% Site of Service Days, Assisted Living',
+'% Beneficiaries 30 or Fewer Days',
+'% Hispanic',
+'% Black',
+'Ratio of Bottom to Top Ratings, Training',
+'Ratio of Bottom to Top Ratings, Timely Care',
+'Ratio of Bottom to Top Ratings, Team Communication',
+'Ratio of Bottom to Top Ratings, Symptoms',
+'Ratio of Bottom to Top Ratings, Respect',
+'Ratio of Bottom to Top Ratings, Emotional/Spiritual Support']
+
 #%% Display Settings
 # Side bar stuff
 state = st.sidebar.selectbox(
@@ -110,7 +129,7 @@ if ((main_view_type == 'State') |
 if main_view_type == 'Model Summary':
     fig = go.Figure(go.Bar(
         x=ols_object.params,
-        y=ols_object.params.index,
+        y=var_names,
         orientation='h'))
     fig.update_layout(
         autosize=False,
