@@ -11,12 +11,16 @@ from sklearn.impute import KNNImputer
 import statsmodels.api as sm
 
 #%%
+st.header('Welcome to Senti-Mentor')
 # Read in full and sparse data
 
 # @st.cache
 def get_data():
     disp_df = pd.read_pickle('data/interim/initial_df.pickle')
     return disp_df
+
+disp_df = get_data()
+st.write(disp_df)
 
 
 
