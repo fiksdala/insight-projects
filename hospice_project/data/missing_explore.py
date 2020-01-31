@@ -1,76 +1,38 @@
 import pandas as pd
-import numpy as np
-import scipy
-#%%
-merged_df = pd.read_pickle('data/interim/merged_df.pickle')
+import pickle
+from matplotlib import pyplot as plt
 
 #%%
-missing_df = merged_df[merged_df['RECOMMEND_BBV'].isna()].reset_index(drop=True)
-full_df = merged_df[~merged_df['RECOMMEND_BBV'].isna()].reset_index(drop=True)
-#%%
-remaining = missing_df.isna().sum() / missing_df.shape[0]
-remaining
+initial_df = pd.read_pickle('data/interim/initial_df.pickle')
 
 #%%
-remaining[remaining<.5].sort_values()
+missing_df = initial_df[initial_df['RECOMMEND_BBV'].isna()].reset_index(drop=True)
+full_df = initial_df[~initial_df['RECOMMEND_BBV'].isna()].reset_index(drop=True)
 
 #%%
-remaining_row = missing_df.isna().sum(axis=1)/113
+miss_sum = pd.DataFrame({
+    'sparse': missing_df.isna().sum(axis=0)/missing_df.shape[0],
+    'full': full_df.isna().sum(axis=0)/full_df.shape[0]
+}).sort_values('sparse')
 
 #%%
-remaining_row.sort_values().plot(kind='hist')
+for i in miss_sum[miss_sum['sparse']<.4].index:
+    print(i)
+
+#%% Cut
+
+cut_nomiss = [i for i in miss_sum.index if (('_No' in i) | ('_Missing' in i))
+ & ('Ownership' not in i)]
+
+cut_desciptive = ['ccn', 'State', 'Facility Name']
+all_cuts = cut_nomiss + cut_desciptive
+sparse_keep = [i for i in miss_sum[miss_sum['sparse']<.4].index
+               if i not in all_cuts]
+
+#%%
+pickle.dump(sparse_keep, open('data/interim/sparse_keep_vars.pickle',
+                              'wb'))
+
+#%%
+plt.hist(missing_df.isna().sum(axis=1)/missing_df.shape[1])
 plt.show()
-
-#%%
-mask = ~missing_df.isna().iloc[0,:]
-
-missing_df.loc[1:,mask].isna().sum().plot(kind='hist')
-plt.show()
-
-#%%
-min_missing = []
-for i in range(missing_df.shape[0]):
-    lmask = ~missing_df.isna().iloc[i, :]
-    lmiss = missing_df.loc[:, lmask].isna().sum(axis=1) / sum(lmask)
-    lfull = full_df.loc[:, lmask].isna().sum(axis=1) / sum(lmask)
-    min_missing.append(
-        [i, sum(lmask),
-         min(lmiss), min(lfull),
-         np.median(lmiss), np.median(lfull),
-         sum(lmiss < .5)/len(lmiss), sum(lfull < .5)/len(lfull),
-         sum(lmiss < .2)/len(lmiss), sum(lfull < .2)/len(lfull),
-         sum(lmiss < .1)/len(lmiss), sum(lfull < .1)/len(lfull)]
-    )
-
-#%%
-missing_summary = pd.DataFrame(np.array(min_missing),
-                               columns=['index', 'n_features',
-                                        'min_miss_m', 'min_miss_f',
-                                        'med_miss_m', 'med_miss_f',
-                                        'perc_5_miss', 'perc_5_full',
-                                        'perc_2_miss', 'perc_2_full',
-                                        'perc_1_miss', 'perc_1_full'])
-
-#%%
-missing_summary = missing_summary.drop(columns=['min_miss_m', 'min_miss_f'])
-
-#%%
-missing_summary.sort_values(
-    'n_features')[['n_features', 'perc_2_miss']].set_index(
-    'n_features'
-).plot(
-    kind='line')
-plt.show()
-
-#%%
-missing_summary[missing_summary['perc_2_miss']>.8]['n_features'].max()
-
-#%%
-full_df['RECOMMEND_BBV'].plot(kind='hist')
-plt.show()
-
-#%%
-scipy.special.logit([.001])
-
-#%%
-full_df['RECOMMEND_BBV'].min()

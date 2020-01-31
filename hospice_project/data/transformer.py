@@ -39,3 +39,15 @@ class MyScaler(BaseEstimator, TransformerMixin):
         return pd.DataFrame(output,
                             columns=self.colnames_)
 
+    def inverse_transform(self, X, y=None):
+        if self.dont_scale is not None:
+            X_inverse = self.scaler.inverse_transform(
+                X[[i for i in X.columns if i not in self.dont_scale]]
+            )
+            output = np.concatenate([X_inverse,
+                                     X[[i for i in X.columns
+                                        if i in self.dont_scale]]
+                                     ], axis=1)
+        else:
+            output = self.scaler.inverse_transform(X)
+        return output

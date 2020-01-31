@@ -16,3 +16,4 @@ xgboost
 streamlit
 plotly
 haversine
+statsmodels
