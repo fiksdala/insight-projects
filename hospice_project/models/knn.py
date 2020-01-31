@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.impute import KNNImputer
 from sklearn.pipeline import Pipeline
-from data.transformer import MyScaler
+from hospice_project.data.transformer import MyScaler
 import pickle
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
@@ -65,7 +65,7 @@ X_sparse_vardf = pd.DataFrame(X_sparse_vardf, columns=sparse_impute_df.columns)
 # Make sparse ccn dict from indices
 X_sparse = X_sparse_vardf.loc[np.array(
     X_train['model_group'] == 'sparse'), :].copy()
-X_sparse.reset_index(drop=True)
+X_sparse.reset_index(drop=True, inplace=True)
 X_full = X_sparse_vardf.loc[np.array(
     X_train['model_group'] == 'full'), :].copy()
 X_full.reset_index(drop=True)
@@ -98,20 +98,20 @@ pickle.dump(knn_sparse, open('data/interim/knn_sparse.pickle', 'wb'))
 pickle.dump(knn_ids, open('data/interim/knn_ids.pickle', 'wb'))
 pickle.dump(pipe_sparse, open('data/interim/pipe_sparse.pickle', 'wb'))
 
+#%%
+pickle.dump(pipe, open('data/interim/pipe.pickle', 'wb'))
 
 #%%#############################################################################
+X['ccn'] = [ccn_dict_not_sparse[i] for i in range(X.shape[0])]
+X_sparse['ccn'] = [ccn_dict_sparse[i] for i in range(X_sparse.shape[0])]
+X_id = X_train[['ccn', 'Facility Name', 'State', 'RECOMMEND_BBV',
+                'model_group', 'sparse_miss_50']].copy()
 
+pd.to_pickle(X, 'data/interim/X_full.pickle')
+pd.to_pickle(X_sparse, 'data/interim/X_sparse.pickle')
+pd.to_pickle(X_id, 'data/interim/X_id.pickle')
 
-
-
-
-
-
-
-
-
-
-
+#%%
 
 
 
@@ -175,5 +175,10 @@ k3nn_dict = dict(zip(
 ))
 k3nn_dict
 
-#%% Function
+#%% Combine dfs
+id_df = X_train['ccn', 'Facility Name', 'State']
+
+#%%
+
+
 
