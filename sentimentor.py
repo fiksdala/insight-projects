@@ -10,10 +10,10 @@ import pickle
 
 # @st.cache
 def get_data():
-    X_full = pd.read_pickle('data/interim/X_full.pickle')
-    X_id = pd.read_pickle('data/interim/X_id.pickle')
-    full_pipe = pd.read_pickle('data/interim/pipe.pickle')
-    full_knn = pd.read_pickle('data/interim/knn_ids.pickle')
+    X_full = pd.read_pickle('X_full.pickle')
+    X_id = pd.read_pickle('X_id.pickle')
+    full_pipe = pd.read_pickle('pipe.pickle')
+    full_knn = pd.read_pickle('knn_ids.pickle')
     return X_full, X_id, full_pipe, full_knn
 
 X_full, X_id, full_pipe, full_knn = get_data()
