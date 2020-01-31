@@ -24,7 +24,7 @@ X_full_raw = full_pipe['scaler'].inverse_transform(X_full.drop(columns='ccn'))
 X_full_raw = pd.DataFrame(X_full_raw,
                           columns=full_pipe['scaler'].colnames_)
 # Read in ols_object for predict
-ols_object = pickle.load(open('data/interim/ols_obj.pickle', 'rb'))
+ols_object = pickle.load(open('ols_obj.pickle', 'rb'))
 
 # Dependent Variable
 dv = 'RECOMMEND_BBV'
