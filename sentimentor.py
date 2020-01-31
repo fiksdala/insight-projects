@@ -29,24 +29,31 @@ ols_object = pickle.load(open('ols_obj.pickle', 'rb'))
 # Dependent Variable
 dv = 'RECOMMEND_BBV'
 
-var_names = ['Skilled Nursing (Yes)',
-'Inpatient Hospice (Yes)',
-'Home Care (Yes)',
-'Assisted Living (Yes)',
-'Medicare Pmts per Beneficiary',
-'Physician Visit Ct. per Beneficiary',
-'Social Work Visit Ct. per Beneficiary',
-'Nurse Visit Ct. per Beneficiary',
-'% Site of Service Days, Assisted Living',
-'% Beneficiaries 30 or Fewer Days',
-'% Hispanic',
-'% Black',
-'Ratio of Bottom to Top Ratings, Training',
-'Ratio of Bottom to Top Ratings, Timely Care',
-'Ratio of Bottom to Top Ratings, Team Communication',
-'Ratio of Bottom to Top Ratings, Symptoms',
-'Ratio of Bottom to Top Ratings, Respect',
-'Ratio of Bottom to Top Ratings, Emotional/Spiritual Support']
+var_names = ['Hospice Visit When Death is Imminent',
+ 'Ratio of Bottom to Top Ratings, Emotional/Spiritual Support',
+ 'Ratio of Bottom to Top Ratings, Respect',
+ 'Ratio of Bottom to Top Ratings, Symptoms',
+ 'Ratio of Bottom to Top Ratings, Team Communication',
+ 'Ratio of Bottom to Top Ratings, Timely Care',
+ 'Ratio of Bottom to Top Ratings, Training',
+ '% Black',
+ '% Hispanic',
+ '% Beneficiaries 30 or Fewer Days',
+ '% Site of Service Days, Assisted Living',
+ 'Nurse Visit Ct. per Beneficiary',
+ 'Social Work Visit Ct. per Beneficiary',
+ 'Physician Visit Ct. per Beneficiary',
+ 'Medicare Pmts per Beneficiary',
+ 'Assisted Living (Yes)',
+ 'Home Care (Yes)',
+ 'Inpatient Hospice (Yes)',
+ 'Skilled Nursing (Yes)']
+
+
+varname_dict = dict(zip(
+    var_names,
+    ols_object.params.index
+))
 
 #%% Display Settings
 # Side bar stuff
@@ -124,6 +131,11 @@ if ((main_view_type == 'State') |
                 width=3
             )
         ))
+    main_distplot.update_layout(
+        title_text='Distribution of Percentage of Negative Recommendations',
+        xaxis_title='Percent Negative Recommendations (red line is facility value)',
+        yaxis_title='Density'
+    )
     st.plotly_chart(main_distplot)
 
 if main_view_type == 'Model Summary':
@@ -132,6 +144,7 @@ if main_view_type == 'Model Summary':
         y=var_names,
         orientation='h'))
     fig.update_layout(
+        title='Regression Model Coefficients (standardized)',
         autosize=False,
         width=500,
         height=500,
@@ -155,17 +168,17 @@ at the bottom of this page.''')
 # Custom specifications
 alter_features = st.multiselect(
     'Select Predictors to Alter',
-    ccn_obs.columns
+    var_names
 )
 
 feature_dict = {}
 new_pred_df_raw = ccn_obs_raw_scale.copy()
 for f in alter_features:
-    feature_dict[f] = st.slider(f,
-                                X_full_raw[f].min(),
-                                X_full_raw[f].max(),
-                                ccn_obs_raw_scale[f].to_numpy()[0])
-    new_pred_df_raw[f] = feature_dict[f]
+    feature_dict[varname_dict[f]] = st.slider(f,
+                                X_full_raw[varname_dict[f]].min(),
+                                X_full_raw[varname_dict[f]].max(),
+                                ccn_obs_raw_scale[varname_dict[f]].to_numpy()[0])
+    new_pred_df_raw[varname_dict[f]] = feature_dict[varname_dict[f]]
 
 new_pred_df_scaled = full_pipe.transform(new_pred_df_raw)
 new_pred = ols_object.get_prediction(new_pred_df_scaled).summary_frame()
@@ -223,9 +236,18 @@ fig.add_trace(go.Scatter(x=[facility, knn1name, knn2name, knn3name],
                             knn3obs],
                          mode='markers',
                          name='Observed'))
+fig.update_layout(
+    title='Model Predicted Negative Recommendation Percentages',
+    yaxis_title='Percent Negative Recommendation',
+    autosize=False,
+    width=700,
+    height=700
+)
 st.plotly_chart(fig)
 
 st.subheader('Compare specific values of comparable facilities below.')
 knn_plus_obs['Facility Name'] = [facility, knn1name, knn2name, knn3name]
 knn_plus_obs['Would Not Recommend'] = [ccn_y, knn1obs, knn2obs, knn3obs]
-st.write(knn_plus_obs[['Facility Name', 'Would Not Recommend']+[i for i in knn_plus_obs.columns if i not in ['Facility Name', 'Would Not Recommend']]])
+knn_plus_obs = knn_plus_obs[['Facility Name', 'Would Not Recommend']+[i for i in knn_plus_obs.columns if i not in ['Facility Name', 'Would Not Recommend']]]
+
+st.write(knn_plus_obs)
