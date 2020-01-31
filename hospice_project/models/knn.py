@@ -39,7 +39,7 @@ pipe.fit(full_x)
 X = pipe.transform(full_x)
 X = pd.DataFrame(X, columns=full_x.columns)
 
-knn_ids = NearestNeighbors(n_neighbors=3)
+knn_ids = NearestNeighbors(n_neighbors=4)
 knn_ids.fit(X)
 distances, indices = knn_ids.kneighbors(X)
 
@@ -47,6 +47,11 @@ knn_dict_full = dict(zip(
     [ccn_dict_full[i] for i in range(X.shape[0])],
     [[ccn_dict_full[i] for i in r] for r in indices]
 ))
+
+
+#%%
+pickle.dump(knn_ids, open('data/interim/knn_ids.pickle', 'wb'))
+
 
 #%% Get knn_dict for 'sparse' model_group
 # impute/scale using full dataset

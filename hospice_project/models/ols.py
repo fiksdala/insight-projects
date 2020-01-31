@@ -108,3 +108,7 @@ pickle.dump(pipe, open('data/interim/pipe.pickle', 'wb'))
 
 #%%
 pipe['scaler'].inverse_transform(X)
+
+#%%
+olsM.params
+
