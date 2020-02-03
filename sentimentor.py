@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import pickle
+import numpy as np
 
 
 #%%
@@ -92,6 +93,24 @@ ccn_obs_raw_scale = pd.DataFrame(ccn_obs_raw_scale,
                                  columns=full_pipe['scaler'].colnames_)
 ccn_pred = ols_object.get_prediction(ccn_obs).summary_frame()
 
+
+def recommender(obs):
+    potential_improvement = []
+    for var in obs:
+        obs_pos = obs[var].to_numpy() > 0
+        coef_pos = ols_object.params[var] > 0
+        obs_neg = obs[var].to_numpy() < 0
+        coef_neg = ols_object.params[var] < 0
+
+        if obs_pos and coef_pos:
+            potential_improvement.append(var)
+        if obs_neg and coef_neg:
+            potential_improvement.append(var)
+    output = obs[potential_improvement].transpose()
+    output.columns = ['obs']
+    # return sorted by absolute values
+    return output.iloc[(-np.abs(output['obs'].values)).argsort()]
+
 # Title
 st.title('Welcome to Senti-Mentor')
 st.write('Helping hospices visualize patient satisfaction')
@@ -99,7 +118,7 @@ st.write('Helping hospices visualize patient satisfaction')
 # Specify view type
 main_view_type = st.radio(
     'Select View Type',
-    ['State', 'National', 'Model Summary']
+    ['State', 'National', 'Model Summary', 'Recommendation']
 )
 
 if main_view_type == 'State':
@@ -164,6 +183,30 @@ performance on average by selecting features from the dropdown box below to
 adjust. For context, the three facilities that most closely match your
 selections are displayed. You can view specific attributes of these facilities
 at the bottom of this page.''')
+
+if main_view_type == 'Recommendation':
+    st.header('How can your facility improve?')
+    targets = recommender(ccn_obs)
+    changes = ccn_obs.copy()
+    changes.loc[:, targets.index] = 0
+    changes_transform = full_pipe['scaler'].inverse_transform(changes)
+    changes_transform = pd.DataFrame(changes_transform,
+                                     columns=ccn_obs.columns)
+    changes_transform = changes_transform[targets.index]
+    target_changes = pd.DataFrame(
+        {'Your Score': targets['obs'],
+         'Your Recommended Score': changes_transform.transpose().iloc[:,0]}
+    )
+    target_changes['Change'] = target_changes['Your Recommended Score'] - \
+                               target_changes['Your Score']
+
+    rec_pred = ols_object.get_prediction(changes).summary_frame()
+    rec_pred = rec_pred['mean'].to_numpy()[0]
+    if rec_pred < 0:
+        rec_pred = 0
+    st.write(f"""Based on our model and your facility's scores, here are some potential 
+    targets for improvement. Based on avilable data, **{ccn_y}% of families are unsatistfied with your performance and would not recommend** your facility. Based on our model, **{round(rec_pred)}% of families would not recommend** a facility with *Your Recommended Score* on average.""")
+    st.table(target_changes)
 
 # Custom specifications
 alter_features = st.multiselect(

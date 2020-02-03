@@ -78,7 +78,7 @@ r_keep_vars = ["H_009_01_OBSERVED",
 "Care_Provided_Inpatient_Hospice_Yes",
 "Care_Provided_Skilled_Nursing_Yes"]
 
-X_train = pd.read_pickle('data/processed/X_train.pickle')
+X_train = pd.read_pickle('data/processed/X_test.pickle')
 
 #%% ols_dfs drop recommend vars and make recommend_bbv Y
 ols_x = X_train[r_keep_vars][~X_train['RECOMMEND_BBV'].isna()]
@@ -110,5 +110,5 @@ pickle.dump(pipe, open('data/interim/pipe.pickle', 'wb'))
 pipe['scaler'].inverse_transform(X)
 
 #%%
-olsM.params
+olsM.summary()
 
