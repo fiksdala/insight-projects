@@ -112,3 +112,8 @@ pipe['scaler'].inverse_transform(X)
 #%%
 olsM.summary()
 
+
+#%%
+a = np.array(1,2,3)
+
+

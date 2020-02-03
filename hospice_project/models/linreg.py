@@ -4,7 +4,10 @@ from sklearn.linear_model import LinearRegression
 from hospice_project.data.transformer import *
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_validate
+import statsmodels.api as sm
+from sklearn.neighbors import NearestNeighbors
 
+#%%
 
 
 X_train = pd.read_pickle('data/processed/X_train.pickle')
@@ -143,3 +146,54 @@ def recommender(obs):
     return output.iloc[(-np.abs(output['obs'].values)).argsort()]
 
 recommender(test_sample)
+
+
+#%%
+ols_vars = ['EMO_REL_BTR', 'RESPECT_BTR', 'SYMPTOMS_BTR',
+                   'TEAM_COMM_BTR', 'TIMELY_CARE_BTR', 'TRAINING_BTR',
+                   'H_009_01_OBSERVED', 'nurseVisitCtPB', 'socialWorkCtPB',
+                   'physicianCtPB',
+                   'percBen30orFewerDays']
+
+initial_df = pd.read_pickle('data/interim/initial_df.pickle')
+X_all = initial_df[~initial_df['RECOMMEND_BBV'].isna()].reset_index(
+    drop=True).copy()
+y_all = X_all['RECOMMEND_BBV'].to_numpy()
+steps_ols = [('scaler', MyScaler(var_dict['dummy_vars'])),
+         ('knn', KNNKeepDf())]
+pipe_ols = Pipeline(steps_ols)
+pipe_ols.fit(X_all[ols_vars])
+
+#%%
+final_ols = sm.OLS(y_all,
+                   pipe_ols.transform(X_all[ols_vars])).fit()
+final_ols.params
+
+#%%
+# X_id
+X_all[['ccn', 'Facility Name', 'State', 'RECOMMEND_BBV']].to_pickle('final_X_id.pickle')
+
+#%%
+X_all.to_pickle('final_X_all.pickle')
+
+#%%
+pd.to_pickle(ols_vars, 'final_ols_vars.pickle')
+
+#%%
+pd.to_pickle(final_ols, 'final_ols.pickle')
+
+#%%
+pd.to_pickle(pipe_ols, 'final_pipe.pickle')
+
+#%%
+final_ols.summary()
+
+#%%
+knn_ids = NearestNeighbors(n_neighbors=4)
+knn_ids.fit(pipe_ols.transform(X_all[ols_vars]))
+
+#%%
+pd.to_pickle(knn_ids, 'final_knn_ids.pickle')
+
+#%%
+pipe_ols.transform(X_all[ols_vars])

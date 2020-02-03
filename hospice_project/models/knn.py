@@ -185,5 +185,7 @@ id_df = X_train['ccn', 'Facility Name', 'State']
 
 #%%
 
+knn_ids = NearestNeighbors(n_neighbors=4)
+knn_ids.fit(X)
 
 
