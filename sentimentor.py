@@ -5,168 +5,208 @@ import plotly.graph_objects as go
 import pickle
 import numpy as np
 
-
-#%%
-# Read in full, sparse, and ccn data
-
-
-final_X_all = pd.read_pickle('final_X_all.pickle')
-final_X_id = pd.read_pickle('final_X_id.pickle')
-final_ols_vars = pd.read_pickle('final_ols_vars.pickle')
-final_ols = pd.read_pickle('final_ols.pickle')
-full_pipe = pd.read_pickle('final_pipe.pickle')
-full_knn = pd.read_pickle('final_knn_ids.pickle')
-
-################################################################################
-# @st.cache
-# def get_data():
-#     X_full = pd.read_pickle('X_full.pickle')
-#     X_id = pd.read_pickle('X_id.pickle')
-#     full_pipe = pd.read_pickle('pipe.pickle')
-#     full_knn = pd.read_pickle('knn_ids.pickle')
-#     return X_full, X_id, full_pipe, full_knn
-#
-# X_full, X_id, full_pipe, full_knn = get_data()
-#
-# X_full_id = X_id[X_id['model_group']=='full']
-
-X_full_raw = full_pipe['scaler'].inverse_transform(final_X_all[final_ols_vars])
-X_full_raw = pd.DataFrame(X_full_raw,
-                          columns=full_pipe['scaler'].colnames_)
-# # Read in ols_object for predict
-# ols_object = pickle.load(open('ols_obj.pickle', 'rb'))
-#
-# # Dependent Variable
-dv = 'RECOMMEND_BBV'
-
-var_names = ['Ratio of Bottom to Top Ratings, Emotional/Spiritual Support',
- 'Ratio of Bottom to Top Ratings, Respect',
- 'Ratio of Bottom to Top Ratings, Symptoms',
- 'Ratio of Bottom to Top Ratings, Team Communication',
- 'Ratio of Bottom to Top Ratings, Timely Care',
- 'Ratio of Bottom to Top Ratings, Training',
-'Hospice Visit When Death is Imminent',
- 'Nurse Visit Ct. per Beneficiary',
- 'Social Work Visit Ct. per Beneficiary',
- 'Physician Visit Ct. per Beneficiary',
-  '% Beneficiaries 30 or Fewer Days']
+@st.cache(allow_output_mutation=True)
+def load_data():
+    complete_df = pd.read_pickle('complete_df.pickle')
+    lr_est_rating = pd.read_pickle('lr_est_rating.pickle')
+    lr_recommend = pd.read_pickle('lr_recommend.pickle')
+    pipe_est_rating = pd.read_pickle('pipe_est_rating.pickle')
+    pipe_recommend = pd.read_pickle('pipe_recommend.pickle')
+    sparse_preds = pd.read_pickle('sparse_preds.pickle')
+    return complete_df, lr_est_rating, lr_recommend, pipe_est_rating, \
+        pipe_recommend, sparse_preds
 
 
-varname_dict = dict(zip(
-    var_names,
-    final_ols_vars
-))
+complete_df, lr_est_rating, lr_recommend, pipe_est_rating, \
+pipe_recommend, sparse_preds = load_data()
+
+coef_labels = ['Number of Providers within 60 Miles',
+ 'Provider Visit Within 3 Days of Death',
+ 'Team Met Emotional Needs',
+ 'Team Managed Symptoms',
+ 'Team Communicated Effectively',
+ 'Care Delivered On Time',
+ 'Staff Adequately Trained',
+ '% Patients < 30 days',
+ 'Nurse Visit per Patient',
+ 'Social Work Visit per Patient',
+ 'Physician Visit per Patient',
+ '% Rural Zip',
+ 'For-Profit']
+
+insight_vars = ['Provider Visit Within 3 Days of Death',
+ 'Team Met Emotional Needs',
+ 'Team Managed Symptoms',
+ 'Team Communicated Effectively',
+ 'Care Delivered On Time',
+ 'Staff Adequately Trained',
+ '% Patients < 30 days',
+ 'Nurse Visit per Patient',
+ 'Social Work Visit per Patient',
+ 'Physician Visit per Patient']
+
+sparse_rec_mae = 1.8
+sparse_rate_mae = .2
 
 #%% Display Settings
 # Side bar stuff
 state = st.sidebar.selectbox(
     'State',
-    sorted(final_X_id['State'].unique())
+    sorted(complete_df['State'].unique())
 )
 
 facility = st.sidebar.selectbox(
     'Facility',
-    sorted(list(final_X_id[final_X_id['State'] == state]['Facility Name']))
+    sorted(list(complete_df[complete_df['State'] == state]['Facility Name']))
 )
 
-if final_X_id.loc[
-    final_X_id['Facility Name'] == facility
-    ].loc[final_X_id['State'] == state].shape[0] > 1:
+if complete_df.loc[
+    complete_df['Facility Name'] == facility
+    ].loc[complete_df['State'] == state].shape[0] > 1:
     ccn = st.sidebar.selectbox(
         f'Multiple records for {facility}. Please select CCN.',
-        final_X_id.loc[
-            final_X_id['Facility Name'] == facility
-            ].loc[final_X_id['State'] == state]['ccn'].to_numpy()
+        complete_df.loc[
+            complete_df['Facility Name'] == facility
+            ].loc[complete_df['State'] == state]['ccn'].to_numpy()
     )
 else:
-    ccn = final_X_id.loc[
-            final_X_id['Facility Name'] == facility
-            ].loc[final_X_id['State'] == state]['ccn'].to_numpy()[0]
+    ccn = complete_df.loc[
+            complete_df['Facility Name'] == facility
+            ].loc[complete_df['State'] == state]['ccn'].to_numpy()[0]
 
 
-ccn_obs = full_pipe.transform(
-    final_X_all[final_X_all['ccn'] == ccn][final_ols_vars]
-)
-
-ccn_y = final_X_id[final_X_id['ccn'] == ccn][dv].to_numpy()[0]
-
-# ccn_obs = pd.DataFrame(ccn_obs,
-#                            columns=full_pipe['scaler'].colnames_)
-ccn_obs_raw_scale = full_pipe['scaler'].inverse_transform(ccn_obs)
-ccn_obs_raw_scale = pd.DataFrame(ccn_obs_raw_scale,
-                                 columns=full_pipe['scaler'].colnames_)
-ccn_pred = final_ols.get_prediction(ccn_obs).summary_frame()
-
-def recommender(obs):
-    potential_improvement = []
-    for var in obs:
-        obs_pos = obs[var].to_numpy() > 0
-        coef_pos = final_ols.params[var] > 0
-        obs_neg = obs[var].to_numpy() < 0
-        coef_neg = final_ols.params[var] < 0
-
-        if obs_pos and coef_pos:
-            potential_improvement.append(var)
-        if obs_neg and coef_neg:
-            potential_improvement.append(var)
-    output = obs[potential_improvement].transpose()
-    output.columns = ['obs']
-    output = output.iloc[(-np.abs(output['obs'].values)).argsort()]
-    # return sorted by absolute values
-    return output.iloc[:3, :]
+if ccn in [str(i) for i in sparse_preds['ccn']]:
+    sparse = True
+    ccn_recommend = sparse_preds[sparse_preds['ccn'] == ccn]['would_recommend']
+    ccn_est_rating = sparse_preds[sparse_preds['ccn'] == ccn]['RATING_EST']
+    ccn_recommend = ccn_recommend.to_numpy()[0]
+    ccn_est_rating = ccn_est_rating.to_numpy()[0]
+    # st.write('SPARSE')
+else:
+    sparse = False
+    ccn_recommend = complete_df.loc[complete_df['ccn'] == ccn,
+                                    'would_recommend']
+    ccn_recommend = ccn_recommend.to_numpy()[0]
+    ccn_est_rating = complete_df.loc[complete_df['ccn'] == ccn,
+                                    'RATING_EST']
+    ccn_est_rating = ccn_est_rating.to_numpy()[0]
+    # st.write('FULL')
 
 # Title
 st.title('Welcome to Senti-Mentor')
-st.write('Helping hospices visualize patient satisfaction')
+st.write('*Helping hospices improve patient and family satisfaction*')
 
 # Specify view type
 main_view_type = st.radio(
     'Select View Type',
-    ['State', 'National',
-     'Model Summary: Compare Similar Facilities and Visualize Change',
-     'Top 3 Recommendations']
+    ['Comparisons',
+     'Model Summary',
+     'Targeted Recommendations']
 )
 
-if main_view_type == 'State':
-    if sum(~final_X_id[final_X_id['State'] == state][dv].isna()) == 0:
-        show_state_warning = True
-        mask = ~final_X_id[dv].isna()
+if main_view_type=='Comparisons':
+    st.write("**Compare your facility's performance with at the state or national"
+             " level below (your score is the red line).**")
+    comparison_view = st.selectbox(
+        'Select Comparison Type',
+        ['National', 'State']
+    )
+    measure = st.radio(
+        '',
+        ['Recommendation Percentage', 'Rating']
+    )
+    if measure=='Recommendation Percentage':
+        if sparse:
+            st.write('**This facility is missing key features, including the'
+                     '  recommendation percentage. Your indicated score '
+                     ' is based on the *Senti-Mentor '
+                     ' Prediction Model*, which has a mean absolute error of '
+                     f' {sparse_rec_mae}%.**')
+        dv = 'would_recommend'
+        dv_val = ccn_recommend
+        y1 = .2
     else:
-        mask = (final_X_id['State'] == state) & (~final_X_id[dv].isna())
+        if sparse:
+            st.write('**This facility is missing key features, including the'
+                     '  overall rating estimate. Your indicated score '
+                     ' is based on the *Senti-Mentor '
+                     ' Prediction Model*, which has a mean absolute error of '
+                     f' {sparse_rate_mae} points.**')
+        dv = 'RATING_EST'
+        dv_val = ccn_est_rating
+        y1 = 2
+    mask = ~complete_df[dv].isna()
+    if comparison_view=='National':
+        main_distplot = ff.create_distplot(
+            [[i for i in complete_df[mask][dv]]],
+            [comparison_view]
+        )
+        main_distplot.add_shape(
+            # Line Vertical
+            go.layout.Shape(
+                type="line",
+                x0=dv_val,
+                y0=0,
+                x1=dv_val,
+                y1=y1,
+                line=dict(
+                    color="Red",
+                    width=3
+                )
+            ))
+        main_distplot.update_layout(
+            title_text=f'Distribution of {measure}',
+            xaxis_title=measure,
+            yaxis_title='Density'
+        )
+        st.plotly_chart(main_distplot)
 
-else:
-    mask = ~final_X_id[dv].isna()
-
-if ((main_view_type == 'State') |
-    (main_view_type == 'National')):
-    main_distplot = ff.create_distplot(
-        [[i for i in final_X_id[mask]['RECOMMEND_BBV']]],
-        [main_view_type]
-    )
-    main_distplot.add_shape(
-        # Line Vertical
-        go.layout.Shape(
-            type="line",
-            x0=ccn_y,
-            y0=0,
-            x1=ccn_y,
-            y1=.2,
-            line=dict(
-                color="Red",
-                width=3
+    if comparison_view=='State':
+        mask = (complete_df['State']==state) & (~complete_df[dv].isna())
+        if sum(mask)==0:
+            st.write(f'**Not enough values in {state} to create a state '
+                     f' distribution, choose *National* comparison type'
+                     f'  instead.**')
+        else:
+            main_distplot = ff.create_distplot(
+                [[i for i in
+                  complete_df[mask][dv]]],
+                [comparison_view]
             )
-        ))
-    main_distplot.update_layout(
-        title_text='Distribution of Percentage of Negative Recommendations',
-        xaxis_title='Percent Negative Recommendations (red line is facility value)',
-        yaxis_title='Density'
-    )
-    st.plotly_chart(main_distplot)
+            main_distplot.add_shape(
+                # Line Vertical
+                go.layout.Shape(
+                    type="line",
+                    x0=dv_val,
+                    y0=0,
+                    x1=dv_val,
+                    y1=y1,
+                    line=dict(
+                        color="Red",
+                        width=3
+                    )
+                ))
+            main_distplot.update_layout(
+                title_text=f'Distribution of {measure}',
+                xaxis_title=measure,
+                yaxis_title='Density'
+            )
+            st.plotly_chart(main_distplot)
 
-if main_view_type == 'Model Summary: Compare Similar Facilities and Visualize Change':
+
+if main_view_type=='Model Summary':
+    model_view = st.selectbox(
+        'Model',
+        ['Recommendations', 'Ratings']
+    )
+    if model_view=='Recommendations':
+        disp_model = lr_recommend
+    else:
+        disp_model = lr_est_rating
     fig = go.Figure(go.Bar(
-        x=final_ols.params,
-        y=final_ols_vars,
+        x=disp_model.coef_,
+        # y=pipe_recommend['scaler'].colnames_,
+        y=coef_labels,
         orientation='h'))
     fig.update_layout(
         title='Regression Model Coefficients (standardized)',
@@ -182,120 +222,213 @@ if main_view_type == 'Model Summary: Compare Similar Facilities and Visualize Ch
         ),
     )
     st.plotly_chart(fig)
-    st.header('How does your facility compare?')
-    st.write('''The figure above summarizes the impact of key service performance factors that predict performance. You can visualize how differences in these factors changes performance on average by selecting features from the dropdown box below to adjust. For context, the three facilities that most closely match your
-selections are displayed.''')
 
-    # Custom specifications
-    alter_features = st.multiselect(
-        'Select Predictors to Alter',
-        var_names
-    )
+raw_obs = complete_df.loc[complete_df['ccn']==ccn,
+                          pipe_recommend['scaler'].colnames_]
 
-    feature_dict = {}
-    new_pred_df_raw = ccn_obs_raw_scale.copy()
-    for f in alter_features:
-        feature_dict[varname_dict[f]] = st.slider(f,
-                                    final_X_all[varname_dict[f]].min(),
-                                    final_X_all[varname_dict[f]].max(),
-                                    ccn_obs_raw_scale[varname_dict[f]].to_numpy()[0])
-        new_pred_df_raw[varname_dict[f]] = feature_dict[varname_dict[f]]
-
-    new_pred_df_scaled = full_pipe.transform(new_pred_df_raw)
-    new_pred = final_ols.get_prediction(new_pred_df_scaled).summary_frame()
-
-    distances, indices = full_knn.kneighbors(new_pred_df_scaled)
-    knn_df = final_X_all.iloc[indices[0],:]
-    knn_plus_obs = knn_df
-    knn_df = knn_df[knn_df['ccn']!=ccn]
-
-    knn_preds = final_ols.get_prediction(
-        full_pipe.transform(knn_df[final_ols_vars])
-    ).summary_frame()
-    knn_cis = knn_preds['mean_ci_upper'] - knn_preds['mean']
-
-    # knn observed dv
-    knn1obs = final_X_id[
-        final_X_id['ccn'] == knn_df['ccn'].to_numpy()[0]
-        ]['RECOMMEND_BBV'].to_numpy()[0]
-    knn2obs = final_X_id[
-        final_X_id['ccn'] == knn_df['ccn'].to_numpy()[1]
-        ]['RECOMMEND_BBV'].to_numpy()[0]
-    knn3obs = final_X_id[
-        final_X_id['ccn'] == knn_df['ccn'].to_numpy()[2]
-        ]['RECOMMEND_BBV'].to_numpy()[0]
-
-    knn1name = final_X_id[
-        final_X_id['ccn']==knn_df['ccn'].to_numpy()[0]]['Facility Name'].to_numpy()[0]
-    knn2name = final_X_id[
-        final_X_id['ccn']==knn_df['ccn'].to_numpy()[1]]['Facility Name'].to_numpy()[0]
-    knn3name = final_X_id[
-        final_X_id['ccn']==knn_df['ccn'].to_numpy()[2]]['Facility Name'].to_numpy()[0]
-
-    # Create Figure
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=[facility,
-                                knn1name,
-                                knn2name,
-                                knn3name],
-                             y=[new_pred['mean'].to_numpy()[0],
-                                knn_preds['mean'].to_numpy()[0],
-                                knn_preds['mean'].to_numpy()[1],
-                                knn_preds['mean'].to_numpy()[2]],
-                             error_y=dict(
-                                 type='data',
-                                 array=[
-                                     new_pred['mean_ci_upper']-new_pred['mean'],
-                                     knn_cis.to_numpy()[0],
-                                     knn_cis.to_numpy()[1],
-                                     knn_cis.to_numpy()[2]]),
-                             mode='markers',
-                             name='Predicted'))
-
-    fig.add_trace(go.Scatter(x=[facility, knn1name, knn2name, knn3name],
-                             y=[ccn_y,
-                                knn1obs,
-                                knn2obs,
-                                knn3obs],
-                             mode='markers',
-                             name='Observed'))
+show_columns = ['Your Score', 'Mean Score', 'Prediction Contribution']
+def get_recs():
+    trans_obs = pipe_recommend.transform(raw_obs)
+    trans_obs_t = pd.DataFrame(trans_obs.to_numpy().transpose())
+    pred_score = lr_recommend.predict(trans_obs)
+    st.subheader('Performance Overview')
+    st.write(f"Our model indicates that {round(pred_score[0],2)}% of families would"
+             f" recommend a hospice with your facility's scores, on average."
+             f" Your facility's actual score was {round(ccn_recommend,2)}%")
+    st.write('The figure below indicates how factors influenced your *predicted*'
+             ' score. Keep in'
+             ' mind that does not necessarily mean those factors *directly* caused'
+             ' your score to increase or decrease (regression models cannot '
+             ' establish causation on their own!). '
+             ' Specific recommendations '
+             ' and additional context are listed below the figure.')
+    coef_df = pd.DataFrame({
+        'raw_feature': pipe_recommend['scaler'].colnames_,
+        'Feature': coef_labels,
+                            'Coefficient': lr_recommend.coef_})
+    coef_df = pd.concat([coef_df, trans_obs_t], axis=1)
+    coef_df = coef_df.set_index('Feature')
+    your_score = pipe_recommend['scaler'].inverse_transform(trans_obs).transpose()
+    coef_df['Your Score'] = your_score
+    ave_scores = [complete_df[i].mean() for i in coef_df['raw_feature']]
+    coef_df['Mean Score'] = ave_scores
+    coef_df['Prediction Contribution'] = coef_df['Coefficient'] * coef_df[0]
+    sort_table = coef_df.loc[
+        insight_vars, show_columns].sort_values('Prediction Contribution', ascending=False)
+    # st.table(sort_table)
+    # st.write(sort_table['Prediction Contribution'])
+    fig = go.Figure(go.Bar(
+        x=sort_table['Prediction Contribution'],
+        # y=pipe_recommend['scaler'].colnames_,
+        y=sort_table.index,
+        orientation='h'
+    ))
     fig.update_layout(
-        title='Model Predicted Negative Recommendation Percentages',
-        yaxis_title='Percent Negative Recommendation',
+        title='Contribution to Predicted Score',
         autosize=False,
-        width=700,
-        height=700
+        width=500,
+        height=500,
+        margin=go.layout.Margin(
+            l=50,
+            r=50,
+            b=100,
+            t=100,
+            pad=4
+        ),
     )
     st.plotly_chart(fig)
 
+    def lh(val):
+        if val >0:
+            return 'raised'
+        else:
+            return 'lowered'
 
-if main_view_type == 'Top 3 Recommendations':
-    st.header('How can your facility improve?')
-    targets = recommender(ccn_obs)
-    your_score = ccn_obs_raw_scale[targets.index]
-    changes = ccn_obs.copy()
-    changes.loc[:, targets.index] = 0
-    changes_transform = full_pipe['scaler'].inverse_transform(changes)
-    changes_transform = pd.DataFrame(changes_transform,
-                                     columns=ccn_obs.columns)
-    changes_transform = changes_transform[targets.index]
-    target_changes = pd.concat([your_score.transpose(),
-                                changes_transform.transpose().iloc[:,0]],
-                               axis=1)
-    target_changes.columns = ['Your Score', 'Your Recommended Score']
-    target_changes['Change'] = target_changes['Your Recommended Score'] - \
-                               target_changes['Your Score']
+    st.write(f"Your facility benefited most from the *{sort_table.index[0]}* "
+             f" factor, which"
+             f" **{lh(sort_table['Prediction Contribution'][0])} "
+             f" your predicted score "
+             f" by {round(sort_table['Prediction Contribution'][0], 2)}%"
+             f" compared to the average.**")
+    st.write(f"The factor that benefited your facility the least was"
+             f" *{sort_table.index[-1]}*, which **resulted in a difference of"
+             f" {round(sort_table['Prediction Contribution'][-1], 2)}"
+             f" compared to the average.**")
 
-    rec_pred = final_ols.get_prediction(changes).summary_frame()
-    rec_pred = rec_pred['mean'].to_numpy()[0]
-    if rec_pred < 0:
-        rec_pred = 0
-    st.write(f"""Based on our model and your facility's scores, here are some potential
-    targets for improvement. Based on avilable data, **{ccn_y}% of families are unsatistfied with your performance and would not recommend** your facility. Based on our model, **{round(rec_pred)}% of families would not recommend** a facility with *Your Recommended Score* on average.""")
-    st.table(target_changes)
-# st.subheader('Compare specific values of comparable facilities below.')
-# knn_plus_obs['Facility Name'] = [facility, knn1name, knn2name, knn3name]
-# knn_plus_obs['Would Not Recommend'] = [ccn_y, knn1obs, knn2obs, knn3obs]
-# knn_plus_obs = knn_plus_obs[['Facility Name', 'Would Not Recommend']+[i for i in knn_plus_obs.columns if i not in ['Facility Name', 'Would Not Recommend']]]
-#
-# st.write(knn_plus_obs)
+    st.write(f"Combined, your 3 lowest performing factors ("
+             f"*{sort_table.index[-3]}*, *{sort_table.index[-2]}*, "
+             f" and *{sort_table.index[-1]}*) "
+             f"**{lh(sum(sort_table['Prediction Contribution'][-3:]))}"
+             f" your predicted score by "
+             f" {round(sum(sort_table['Prediction Contribution'][-3:]),2)}"
+             f" % compared to the average.**")
+
+    st.subheader('Recommendations: How to use this information?')
+    st.write('This analysis relied on regression techniques that **cannot'
+             ' establish causal relationships.** Additionally, some '
+             ' features described here may not be good targets for direct'
+             ' intervention, either because they are not directly modifiable'
+             ' or it would be counterproductive to do so. '
+             ' **Still, these insights'
+             ' can be used to help identify and prioritize potential '
+             ' targets for intervention for improvements.** '
+             ' The 3 lowest performing factors listed above represent the'
+             ' best "bang for your buck" in terms of potential improvement,'
+             ' since they balance the impact of the predictor with '
+             ' your specific score and room for improvement.'
+             ' A sound approach would be to interrogate your processes '
+             'related to those factors outlined above in order to '
+             ' identify potential root causes of success or failure. For an '
+             ' even more data-driven'
+             ' approach, a properly-designed experiment may be able to '
+             ' shed further light on how your processes impact performance.'
+             )
+
+
+def get_rates():
+    trans_obs = pipe_est_rating.transform(raw_obs)
+    trans_obs_t = pd.DataFrame(trans_obs.to_numpy().transpose())
+    pred_score = lr_est_rating.predict(trans_obs)
+    st.subheader('Performance Overview')
+    st.write(f"Our model indicates that families would rate your hospice"
+             f" {round(pred_score[0],2)} out of 10, on average. "
+             f" Your facility's actual score was {round(ccn_est_rating,2)}")
+    st.write('The figure below indicates how factors influenced your *predicted*'
+             ' score. Keep in'
+             ' mind that does not necessarily mean those factors *directly* caused'
+             ' your score to increase or decrease (regression models cannot '
+             ' establish causation on their own!). '
+             ' Specific recommendations '
+             ' and additional context are listed below the figure.')
+    coef_df = pd.DataFrame({
+        'raw_feature': pipe_est_rating['scaler'].colnames_,
+        'Feature': coef_labels,
+                            'Coefficient': lr_est_rating.coef_})
+    coef_df = pd.concat([coef_df, trans_obs_t], axis=1)
+    coef_df = coef_df.set_index('Feature')
+    your_score = pipe_est_rating['scaler'].inverse_transform(trans_obs).transpose()
+    coef_df['Your Score'] = your_score
+    ave_scores = [complete_df[i].mean() for i in coef_df['raw_feature']]
+    coef_df['Mean Score'] = ave_scores
+    coef_df['Prediction Contribution'] = coef_df['Coefficient'] * coef_df[0]
+    sort_table = coef_df.loc[
+        insight_vars, show_columns].sort_values('Prediction Contribution', ascending=False)
+    # st.table(sort_table)
+    # st.write(sort_table['Prediction Contribution'])
+    fig = go.Figure(go.Bar(
+        x=sort_table['Prediction Contribution'],
+        # y=pipe_recommend['scaler'].colnames_,
+        y=sort_table.index,
+        orientation='h'
+    ))
+    fig.update_layout(
+        title='Contribution to Predicted Score',
+        autosize=False,
+        width=500,
+        height=500,
+        margin=go.layout.Margin(
+            l=50,
+            r=50,
+            b=100,
+            t=100,
+            pad=4
+        ),
+    )
+    st.plotly_chart(fig)
+
+    def lh(val):
+        if val >0:
+            return 'raised'
+        else:
+            return 'lowered'
+
+    st.write(f"Your facility benefited most from the *{sort_table.index[0]}* "
+             f" factor, which"
+             f" **{lh(sort_table['Prediction Contribution'][0])} "
+             f" your predicted score "
+             f" by {round(sort_table['Prediction Contribution'][0], 2)} points"
+             f" compared to the average.**")
+    st.write(f"The factor that benefited your facility the least was"
+             f" *{sort_table.index[-1]}*, which **resulted in a difference of"
+             f" {round(sort_table['Prediction Contribution'][-1], 2)}"
+             f" points compared to the average.**")
+
+    st.write(f"Combined, your 3 lowest performing factors ("
+             f"*{sort_table.index[-3]}*, *{sort_table.index[-2]}*, "
+             f" and *{sort_table.index[-1]}*) "
+             f"**{lh(sum(sort_table['Prediction Contribution'][-3:]))}"
+             f" your predicted score by "
+             f" {round(sum(sort_table['Prediction Contribution'][-3:]),2)}"
+             f" points out of ten compared to the average.**")
+
+    st.subheader('Recommendations: How to use this information?')
+    st.write('This analysis relied on regression techniques that **cannot'
+             ' establish causal relationships.** Additionally, some '
+             ' features described here may not be good targets for direct'
+             ' intervention, either because they are not directly modifiable'
+             ' or it would be counterproductive to do so. '
+             ' **Still, these insights'
+             ' can be used to help identify and prioritize potential '
+             ' targets for intervention for improvements.** '
+             ' The 3 lowest performing factors listed above represent the'
+             ' best "bang for your buck" in terms of potential improvement,'
+             ' since they balance the impact of the predictor with '
+             ' your specific score and room for improvement.'
+             ' A sound approach would be to interrogate your processes '
+             'related to those factors outlined above in order to '
+             ' identify potential root causes of success or failure. For an '
+             ' even more data-driven'
+             ' approach, a properly-designed experiment may be able to '
+             ' shed further light on how your processes impact performance.'
+             )
+
+
+if main_view_type == 'Targeted Recommendations':
+    model_view = st.selectbox(
+            'Model',
+            ['Recommendations', 'Ratings']
+        )
+    if model_view=='Recommendations':
+        get_recs()
+    if model_view=='Ratings':
+        get_rates()
