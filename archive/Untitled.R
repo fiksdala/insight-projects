@@ -2,6 +2,7 @@ df = read.csv('data/processed/ready_X.csv')
 dfP = read.csv('data/processed/ready_Xpca.csv')
 y = read.csv('data/processed/ready_y.csv')
 bdf = cbind(df, y)
+colnames(df_train)
 library(car)
 library(Metrics)
 library(MLmetrics)
@@ -9,7 +10,7 @@ bdf
 library(betareg)
 ?r2
 ?betareg
-colnames(df)
+colnames(bdf)
 m_beta = betareg(y~., data=df)
 
 summary(m_beta)
@@ -65,7 +66,7 @@ beta_kfold = function(df, n_folds){
                   r2=r2_train_out))
 }
 
-eval = beta_kfold(bdf, 5)
+eval = beta_kfold(df, 5)
 
 rkf = list(test=list(rmse=c(), mse=c(), mae=c(), r2=c()),
            train=list(rmse=c(), mse=c(), mae=c(), r2=c()))
@@ -86,6 +87,8 @@ mean(rkf$test$rmse)
 mean(rkf$test$mae)
 colnames(df)
 m_lm = lm(y~., data=bdf)
+
+summary(m_lm)
 qqnorm(rstandard(m))
 qqline(rstandard(m))
 
