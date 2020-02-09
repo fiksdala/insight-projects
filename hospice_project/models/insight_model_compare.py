@@ -12,12 +12,14 @@ from lightgbm import LGBMRegressor
 complete_df = pd.read_pickle('data/interim/complete_df.pickle')
 X_raw, y = get_train_test(complete_df,
                       defs.dense_vars,
-                      'would_recommend')
+                      'would_recommend',
+                          return_full=True)
 r_out(complete_df, defs.dense_vars, 'would_recommend', 'would_recommend')
 
 X_raw_er, y_er = get_train_test(complete_df,
                       defs.dense_vars,
-                      'RATING_EST')
+                      'RATING_EST',
+                                return_full=True)
 r_out(complete_df, defs.dense_vars, 'RATING_EST', 'RATING_EST')
 
 #%% would_recommend
@@ -60,11 +62,12 @@ def lgbm_insight_wr():
     pipe.fit(X_raw)
     X = pipe.transform(X_raw)
 
-    params = {
-        'max_bin': [10, 20, 50, 100, 255],
-        'num_leaves': [5, 10, 31, 50],
-        'bagging_fraction': [.1, .3, .5, .7, 1]
-    }
+    # Run once to get ideal parameters
+    # params = {
+    #     'max_bin': [10, 20, 50, 100, 255],
+    #     'num_leaves': [5, 10, 31, 50],
+    #     'bagging_fraction': [.1, .3, .5, .7, 1]
+    # }
 
     # lgb_q = LGBMRegressor(objective='quantile')
     #
@@ -141,12 +144,13 @@ def lgbm_insight_er():
     pipe.fit(X_raw_er)
     X = pipe.transform(X_raw_er)
 
-    params = {
-        'max_bin': [10, 20, 50, 100, 255],
-        'num_leaves': [5, 10, 31, 50],
-        'min_data_in_leaf': [10, 20, 30],
-        'bagging_fraction': [.1, .3, .5, .7, 1]
-    }
+    # Run once to get ideal parameters
+    # params = {
+    #     'max_bin': [10, 20, 50, 100, 255],
+    #     'num_leaves': [5, 10, 31, 50],
+    #     'min_data_in_leaf': [10, 20, 30],
+    #     'bagging_fraction': [.1, .3, .5, .7, 1]
+    # }
 
     # lgb_q = LGBMRegressor(objective='quantile')
 
@@ -203,7 +207,7 @@ print(would_recommend_perf, '\n',
 #%%
 insight_compare = {'would_recommend': would_recommend_perf,
                    'rating_est': rating_est_perf}
-pd.to_pickle(insight_compare, 'data/interim/insight_compare.pickle')
+pd.to_pickle(insight_compare, 'models/insight_compare.pickle')
 
 
 

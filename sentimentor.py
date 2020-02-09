@@ -2,17 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
+from PIL import Image
 import pickle
 import numpy as np
 
 @st.cache(allow_output_mutation=True)
 def load_data():
-    complete_df = pd.read_pickle('complete_df.pickle')
-    lr_est_rating = pd.read_pickle('lr_est_rating.pickle')
-    lr_recommend = pd.read_pickle('lr_recommend.pickle')
-    pipe_est_rating = pd.read_pickle('pipe_est_rating.pickle')
-    pipe_recommend = pd.read_pickle('pipe_recommend.pickle')
-    sparse_preds = pd.read_pickle('sparse_preds.pickle')
+    complete_df = pd.read_pickle('models/complete_df.pickle')
+    lr_est_rating = pd.read_pickle('models/lr_est_rating.pickle')
+    lr_recommend = pd.read_pickle('models/lr_recommend.pickle')
+    pipe_est_rating = pd.read_pickle('models/pipe_est_rating.pickle')
+    pipe_recommend = pd.read_pickle('models/pipe_recommend.pickle')
+    sparse_preds = pd.read_pickle('models/sparse_preds.pickle')
     return complete_df, lr_est_rating, lr_recommend, pipe_est_rating, \
         pipe_recommend, sparse_preds
 
@@ -44,6 +45,9 @@ insight_vars = ['Provider Visit Within 3 Days of Death',
  'Nurse Visit per Patient',
  'Social Work Visit per Patient',
  'Physician Visit per Patient']
+
+image_wr = Image.open('models/would_recommend_shap.png')
+image_er = Image.open('models/rate_xgb.png')
 
 sparse_rec_mae = 1.8
 sparse_rate_mae = .2
@@ -123,6 +127,7 @@ if main_view_type=='Comparisons':
                      ' Prediction Model*, which has a mean absolute error of '
                      f' {sparse_rec_mae}%.**')
         dv = 'would_recommend'
+        bin_size = 1
         dv_val = ccn_recommend
         y1 = .2
     else:
@@ -133,13 +138,15 @@ if main_view_type=='Comparisons':
                      ' Prediction Model*, which has a mean absolute error of '
                      f' {sparse_rate_mae} points.**')
         dv = 'RATING_EST'
+        bin_size = .1
         dv_val = ccn_est_rating
         y1 = 2
     mask = ~complete_df[dv].isna()
     if comparison_view=='National':
         main_distplot = ff.create_distplot(
             [[i for i in complete_df[mask][dv]]],
-            [comparison_view]
+            [comparison_view],
+            bin_size=bin_size
         )
         main_distplot.add_shape(
             # Line Vertical
@@ -171,7 +178,8 @@ if main_view_type=='Comparisons':
             main_distplot = ff.create_distplot(
                 [[i for i in
                   complete_df[mask][dv]]],
-                [comparison_view]
+                [comparison_view],
+                bin_size=bin_size
             )
             main_distplot.add_shape(
                 # Line Vertical
@@ -194,34 +202,50 @@ if main_view_type=='Comparisons':
             st.plotly_chart(main_distplot)
 
 
-if main_view_type=='Model Summary':
+if main_view_type == 'Model Summary':
     model_view = st.selectbox(
         'Model',
         ['Recommendations', 'Ratings']
     )
-    if model_view=='Recommendations':
+    if model_view == 'Recommendations':
         disp_model = lr_recommend
+        if sparse:
+            st.subheader("Senti-Mentor Prediction Model")
+            st.write("Model overview here")
+            st.image(image_wr, width=600)
+        else:
+            st.subheader("Senti-Mentor Insight Model")
+            st.write("Model overview here")
     else:
         disp_model = lr_est_rating
-    fig = go.Figure(go.Bar(
-        x=disp_model.coef_,
-        # y=pipe_recommend['scaler'].colnames_,
-        y=coef_labels,
-        orientation='h'))
-    fig.update_layout(
-        title='Regression Model Coefficients (standardized)',
-        autosize=False,
-        width=500,
-        height=500,
-        margin=go.layout.Margin(
-            l=50,
-            r=50,
-            b=100,
-            t=100,
-            pad=4
-        ),
-    )
-    st.plotly_chart(fig)
+        if sparse:
+            st.subheader("Senti-Mentor Prediction Model")
+            st.write("Model overview here")
+            st.image(image_er, width=600)
+        else:
+            st.subheader("Senti-Mentor Insight Model")
+            st.write("Model overview here")
+
+    if not sparse:
+        fig = go.Figure(go.Bar(
+            x=disp_model.coef_,
+            # y=pipe_recommend['scaler'].colnames_,
+            y=coef_labels,
+            orientation='h'))
+        fig.update_layout(
+            title='Regression Model Coefficients (standardized)',
+            autosize=False,
+            width=500,
+            height=500,
+            margin=go.layout.Margin(
+                l=50,
+                r=50,
+                b=100,
+                t=100,
+                pad=4
+            ),
+        )
+        st.plotly_chart(fig)
 
 raw_obs = complete_df.loc[complete_df['ccn']==ccn,
                           pipe_recommend['scaler'].colnames_]
@@ -346,13 +370,15 @@ def get_rates():
                             'Coefficient': lr_est_rating.coef_})
     coef_df = pd.concat([coef_df, trans_obs_t], axis=1)
     coef_df = coef_df.set_index('Feature')
-    your_score = pipe_est_rating['scaler'].inverse_transform(trans_obs).transpose()
+    your_score = pipe_est_rating['scaler'].inverse_transform(
+        trans_obs).transpose()
     coef_df['Your Score'] = your_score
     ave_scores = [complete_df[i].mean() for i in coef_df['raw_feature']]
     coef_df['Mean Score'] = ave_scores
     coef_df['Prediction Contribution'] = coef_df['Coefficient'] * coef_df[0]
     sort_table = coef_df.loc[
-        insight_vars, show_columns].sort_values('Prediction Contribution', ascending=False)
+        insight_vars, show_columns].sort_values('Prediction Contribution',
+                                                ascending=False)
     # st.table(sort_table)
     # st.write(sort_table['Prediction Contribution'])
     fig = go.Figure(go.Bar(
@@ -428,7 +454,23 @@ if main_view_type == 'Targeted Recommendations':
             'Model',
             ['Recommendations', 'Ratings']
         )
-    if model_view=='Recommendations':
-        get_recs()
-    if model_view=='Ratings':
-        get_rates()
+    if model_view == 'Recommendations':
+        if sparse:
+            st.write(f"Your facility's predicted family recommendation rate is "
+                     f"{round(ccn_recommend)}%; "
+                     "however, key modifiable features are missing. Targeted "
+                     "recommendations are not available. For more information "
+                     "on what factors informed your predicted family "
+                     "recommendation percentage, see 'Model Summary'.")
+        else:
+            get_recs()
+    if model_view == 'Ratings':
+        if sparse:
+            st.write(f"Your facility's predicted rating is "
+                     f"{round(ccn_est_rating)}; "
+                     "however, key modifiable features are missing. Targeted "
+                     "recommendations are not available. For more information "
+                     "on what factors informed your predicted "
+                     "rating, see 'Model Summary'.")
+        else:
+            get_rates()

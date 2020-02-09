@@ -17,3 +17,4 @@ streamlit
 plotly
 haversine
 statsmodels
+shap

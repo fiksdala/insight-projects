@@ -118,7 +118,41 @@ sparse_vars = [
  'H_008_01_OBSERVED'
 ]
 
+dummy_vars = ['Ownership Type_Combination Government & Non-Profit',
+  'Ownership Type_For-Profit',
+  'Ownership Type_Government',
+  'Ownership Type_Non-Profit',
+  'Ownership Type_Other',
+  'Care_Provided_Assisted_Living_Missing',
+  'Care_Provided_Assisted_Living_No',
+  'Care_Provided_Assisted_Living_Yes',
+  'Care_Provided_Home_Missing',
+  'Care_Provided_Home_No',
+  'Care_Provided_Home_Yes',
+  'Care_Provided_Inpatient_Hospice_Missing',
+  'Care_Provided_Inpatient_Hospice_No',
+  'Care_Provided_Inpatient_Hospice_Yes',
+  'Care_Provided_Inpatient_Hospital_Missing',
+  'Care_Provided_Inpatient_Hospital_No',
+  'Care_Provided_Inpatient_Hospital_Yes',
+  'Care_Provided_Nursing_Facility_Missing',
+  'Care_Provided_Nursing_Facility_No',
+  'Care_Provided_Nursing_Facility_Yes',
+  'Care_Provided_Skilled_Nursing_Missing',
+  'Care_Provided_Skilled_Nursing_No',
+  'Care_Provided_Skilled_Nursing_Yes',
+  'Care_Provided_other_locations_Missing',
+  'Care_Provided_other_locations_No',
+  'Care_Provided_other_locations_Yes',
+  'Provided_Home_Care_and_other_Missing',
+  'Provided_Home_Care_and_other_No',
+  'Provided_Home_Care_and_other_Yes',
+  'Provided_Home_Care_only_Missing',
+  'Provided_Home_Care_only_No',
+  'Provided_Home_Care_only_Yes']
+
 #%% Variable Dicts
+
 feature_groups = {
     'Service Quality': ['EMO_REL_BTR', 'RESPECT_BTR', 'SYMPTOMS_BTR',
                         'TEAM_COMM_BTR', 'TIMELY_CARE_BTR', 'TRAINING_BTR'],
