@@ -91,3 +91,6 @@ target/
 # Messy code work
 /hospice_project/data/messy.py
 .Rproj.user
+
+# Archive folders with old code
+/archive/

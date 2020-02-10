@@ -95,6 +95,10 @@ else:
     ccn_est_rating = ccn_est_rating.to_numpy()[0]
     # st.write('FULL')
 
+# Add link to slides
+st.sidebar.markdown('A google slides presentation summarizing this project is available '
+                    '[here](https://drive.google.com/open?id=1cF2lvRfTB_jk-UUtW0xzQMosyj9oB4Ubf4lO7CFE9sg).')
+
 # Title
 st.title('Welcome to Senti-Mentor')
 st.write('*Helping hospices improve patient and family satisfaction*')
