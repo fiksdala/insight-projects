@@ -93,4 +93,4 @@ target/
 .Rproj.user
 
 # Archive folders with old code
-**/archive/
+archive/
