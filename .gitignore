@@ -93,9 +93,9 @@ target/
 .Rproj.user
 
 # Archive folders with old code
-/archive
-/hospice_project/data/archive
-/hospice_project/models/archive
-/hospice_project/features/archive
-/hospice_project/visualization/archive
+/archive/*
+/hospice_project/data/archive/*
+/hospice_project/models/archive/*
+/hospice_project/features/archive/*
+/hospice_project/visualization/archive/*
 
