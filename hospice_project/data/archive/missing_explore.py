@@ -3,7 +3,7 @@ import pickle
 from matplotlib import pyplot as plt
 
 #%%
-initial_df = pd.read_pickle('data/interim/initial_df.pickle')
+initial_df = pd.read_pickle('data/interim/complete_df.pickle')
 
 #%%
 missing_df = initial_df[initial_df['RECOMMEND_BBV'].isna()].reset_index(drop=True)

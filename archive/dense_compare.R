@@ -3,7 +3,7 @@ library(Metrics)
 library(MLmetrics)
 library(betareg)
 
-df = read.csv('data/processed/would_recommend.csv')
+df = read.csv('data/processed/RATING_EST.csv')
 colnames(df)
 
 m_wr = lm(would_recommend ~ ., data=df)
@@ -13,9 +13,9 @@ mae(df$would_recommend, predict(m_wr, df))
 vif(m_wr)
 
 beta_df = df
-beta_df$would_recommend = (df$would_recommend*.01*(nrow(df)-1) + 0.5)/nrow(df)
-beta_df$y = beta_df$would_recommend
-beta_df$would_recommend = NULL
+beta_df$y = (df$RATING_EST*.01*(nrow(df)-1) + 0.5)/nrow(df)
+beta_df$y = beta_df$RATING_EST
+beta_df$RATING_EST = NULL
 
 f_K_fold <- function(Nobs,K=5){
   rs <- runif(Nobs)
@@ -69,6 +69,6 @@ beta_kfold = function(df, n_folds){
 
 eval = beta_kfold(beta_df, 5)
 for(score in eval$test){
-  print(mean(score))
+  print(mean(score)*100)
 }
 eval
