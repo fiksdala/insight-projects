@@ -3,8 +3,6 @@ import pandas as pd
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 from PIL import Image
-import pickle
-import numpy as np
 
 @st.cache(allow_output_mutation=True)
 def load_data():
@@ -49,8 +47,8 @@ insight_vars = ['Provider Visit Within 3 Days of Death',
 image_wr = Image.open('models/would_recommend_shap.png')
 image_er = Image.open('models/rate_xgb.png')
 
-sparse_rec_mae = 1.8
-sparse_rate_mae = .2
+sparse_rec_mae = 1.9
+sparse_rate_mae = .16
 
 #%% Display Settings
 # Side bar stuff
@@ -164,7 +162,7 @@ if main_view_type == 'Comparisons':
             ))
         main_distplot.update_layout(
             title_text=f'Distribution of {measure}',
-            xaxis_title=measure,
+            xaxis_title=measure + ' (Red Line is Your Facility)',
             yaxis_title='Density'
         )
         st.plotly_chart(main_distplot)
