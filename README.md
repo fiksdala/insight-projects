@@ -10,12 +10,12 @@ This project predicts family recommendation rates and estimated mean ratings at 
 Hospice care eases end of life for patients and families while avoiding unnecessary hospital admissions and saving money. Hospice providers are required to submit a variety of data to the Centers for Medicare & Medicaid Services (CMS), which are then made available to the public. Moreover, these data are used in Medicare's *Hospice Compare* tool, which allows patients and families to compare providers across a variety of performance and service dimensions. However, provider-submitted data is decentralized and no tools exist to help providers analyze what informs measures of patient/family satisfaction. *Senti-Mentor* addresses these needs by combining multiple sources of hospice provider data and analyzing them using regression and gradient-boosted regression tree models. Specifically, it helps hospice providers address the following questions:
 
 - Are our patients and families satisfied?
- - Visualizations of observed satisfaction measures in the context of state and national distributions
- - For facilities that lack satisfaction data: XGBoost model predictions based on available features 
+  - Visualizations of observed satisfaction measures in the context of state and national distributions
+  - For facilities that lack satisfaction data: XGBoost model predictions based on available features 
 - What factors predict satisfaction?
- - Summaries of regression models predicting family recommendation rates and average ratings from actionable measures of service quality, services delivered, and facility characteristics.
+  - Summaries of regression models predicting family recommendation rates and average ratings from actionable measures of service quality, services delivered, and facility characteristics.
 - What factors should take priority in future interventions?
- - Targeted recommendations constructed by taking into account both the magnitude of regression coefficients and specific provider feature values.
+  - Targeted recommendations constructed by taking into account both the magnitude of regression coefficients and specific provider feature values.
 
 # Step 1: Merge CMS Data Sources
 
@@ -57,10 +57,15 @@ Other fixed values (variable lists, custom dictionaries, etc.) defined in defini
 Executing the following scripts in this order will produce the files required for the streamlit app to function:
 
 hospice\_project/data/clean\_data.py
+
 hospice\_project/features/build\_features.py
+
 hospice\_project/models/insight\_model\_compare.py
+
 hospice\_project/models/prediction\_model\_compare.py
+
 hospice\_project/models/train\_insight.py
+
 hospice\_project/models/train\_prediction.py
 
 
