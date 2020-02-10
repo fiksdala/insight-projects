@@ -233,6 +233,7 @@ def add_all_features(df, feature_function_list):
 
 complete_df = add_all_features(merged_df, feature_functions)
 complete_df.to_pickle('data/interim/complete_df.pickle')
+complete_df.to_pickle('models/complete_df.pickle')
 
 
 

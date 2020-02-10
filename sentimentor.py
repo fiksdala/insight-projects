@@ -54,6 +54,7 @@ sparse_rate_mae = .2
 
 #%% Display Settings
 # Side bar stuff
+st.sidebar.header('Select Your Facility')
 state = st.sidebar.selectbox(
     'State',
     sorted(complete_df['State'].unique())
