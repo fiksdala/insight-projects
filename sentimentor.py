@@ -108,7 +108,7 @@ main_view_type = st.radio(
      'Targeted Recommendations']
 )
 
-if main_view_type=='Comparisons':
+if main_view_type == 'Comparisons':
     st.write("**Compare your facility's performance with at the state or national"
              " level below (your score is the red line).**")
     comparison_view = st.selectbox(
@@ -168,9 +168,9 @@ if main_view_type=='Comparisons':
         )
         st.plotly_chart(main_distplot)
 
-    if comparison_view=='State':
-        mask = (complete_df['State']==state) & (~complete_df[dv].isna())
-        if sum(mask)==0:
+    if comparison_view == 'State':
+        mask = (complete_df['State'] == state) & (~complete_df[dv].isna())
+        if sum(mask) == 0:
             st.write(f'**Not enough values in {state} to create a state '
                      f' distribution, choose *National* comparison type'
                      f'  instead.**')
@@ -211,20 +211,110 @@ if main_view_type == 'Model Summary':
         disp_model = lr_recommend
         if sparse:
             st.subheader("Senti-Mentor Prediction Model")
-            st.write("Model overview here")
+            st.write(f"Your facility's predicted family recommendation rate is "
+                     f"{round(ccn_recommend)}%")
+            st.write("This facility is missing key actionable features. "
+                     "Your facility's recommendation rate was predicted using "
+                     "a machine learning model with features which "
+                     "may not be directly modifiable or practically useful.")
+            st.write("The plot below depicts which features were important "
+                     "in determining your prediction. Features near the top "
+                     "were more important than features near the bottom. "
+                     "Points to the right of the vertical line indicate that "
+                     "they had a positive impact on family recommendations, "
+                     "while those on the left had a negative impact. "
+                     "Finally, red points indicate positive feature values, "
+                     "while blue points indicate negative feature values.")
+            st.subheader("Main Takeaways")
+            st.write("- Facilities with more white patients received "
+                     "higher family recommendation rates on average. This "
+                     "indicates that hospices should focus on how to "
+                     "best serve diverse populations.")
+            st.write("- Hospices in areas with more nearby facilities "
+                     "received lower recommendation rates on average. This "
+                     "could simply be a proxy for population density. ")
+            st.write("- Facilities that delivered more services (e.g. home aide "
+                     "and nursing visits) earned higher recommendation rates "
+                     "on average.")
             st.image(image_wr, width=600)
         else:
             st.subheader("Senti-Mentor Insight Model")
-            st.write("Model overview here")
+            st.write(f"Your facility's predicted family recommendation rate is "
+                     f"{round(ccn_recommend)}%")
+            st.write("This regression model is designed to both predict ratings "
+                     "and summarize actionable insights. Features were chosen "
+                     "to maximize prediction and interpretation. Some main "
+                     "takeaways of the model are summarized below, along "
+                     "with a visual representation of the impact of "
+                     "each feature included in the model.")
+            st.subheader('Main Takeaways')
+            st.write("-  Effective communication and emotional support "
+                     "were the strongest predictors of family recommendation "
+                     "rates, followed by timely delivery of care, proper symptom "
+                     "management, and staff training.")
+            st.write("-  More physician and nurse visits per patient predicted "
+                     "higher recommendation rates on average.")
+            st.write("-  Facilities with more patients who spent less than "
+                     "30 days being treated had higher recommendation rates "
+                     "on average. Note that this is just an association and does "
+                     "not imply that hospices should avoid patients with long-"
+                     "term needs. Instead, providers should explore ways to "
+                     "increase satisfaction among patients and families who "
+                     "require longer-term care.")
     else:
         disp_model = lr_est_rating
         if sparse:
             st.subheader("Senti-Mentor Prediction Model")
-            st.write("Model overview here")
+            st.write(f"Your facility's predicted rating is "
+                     f"{round(ccn_est_rating)}.")
+            st.write("This facility is missing key actionable features. "
+                     "Your facility's rating was predicted using "
+                     "a machine learning model with features which "
+                     "may not be directly modifiable or practically useful.")
+            st.write("The plot below depicts which features were important "
+                     "in determining your prediction. Features near the top "
+                     "were more important than features near the bottom. "
+                     "Points to the right of the vertical line indicate that "
+                     "they had a positive impact on family recommendations, "
+                     "while those on the left had a negative impact. "
+                     "Finally, red points indicate positive feature values, "
+                     "while blue points indicate negative feature values.")
+            st.subheader("Main Takeaways")
+            st.write("- Hospices in areas with more nearby facilities "
+                     "received lower ratings on average. This "
+                     "could simply be a proxy for population density. ")
+            st.write("- Facilities with more white patients received "
+                     "higher ratings on average. This "
+                     "indicates that hospices should focus on how to "
+                     "best serve diverse populations.")
+            st.write("- Facilities that delivered more services (e.g. nursing "
+                     "visits) earned higher ratings "
+                     "on average.")
             st.image(image_er, width=600)
         else:
             st.subheader("Senti-Mentor Insight Model")
-            st.write("Model overview here")
+            st.write(f"Your facility's predicted rating is "
+                     f"{round(ccn_est_rating)}.")
+            st.write("This regression model is designed to both predict ratings "
+                     "and summarize actionable insights. Features were chosen "
+                     "to maximize prediction and interpretation. Some main "
+                     "takeaways of the model are summarized below, along "
+                     "with a visual representation of the impact of "
+                     "each feature included in the model.")
+            st.subheader('Main Takeaways')
+            st.write("-  Effective communication and emotional support "
+                     "were the strongest predictors of ratings, followed by "
+                     "timely delivery of care, proper symptom "
+                     "management, and staff training.")
+            st.write("-  More physician and nurse visits per patient predicted "
+                     "higher ratings on average.")
+            st.write("-  Facilities with more patients who spent less than "
+                     "30 days being treated had higher ratings "
+                     "on average. Note that this is just an association and does "
+                     "not imply that hospices should avoid patients with long-"
+                     "term needs. Instead, providers should explore ways to "
+                     "increase satisfaction among patients and families who "
+                     "require longer-term care.")
 
     if not sparse:
         fig = go.Figure(go.Bar(
@@ -235,8 +325,8 @@ if main_view_type == 'Model Summary':
         fig.update_layout(
             title='Regression Model Coefficients (standardized)',
             autosize=False,
-            width=500,
-            height=500,
+            width=600,
+            height=600,
             margin=go.layout.Margin(
                 l=50,
                 r=50,
@@ -244,7 +334,9 @@ if main_view_type == 'Model Summary':
                 t=100,
                 pad=4
             ),
+            xaxis_title=f'Relative Impact on {model_view}'
         )
+
         st.plotly_chart(fig)
 
 raw_obs = complete_df.loc[complete_df['ccn']==ccn,
@@ -263,7 +355,7 @@ def get_recs():
              ' score. Keep in'
              ' mind that does not necessarily mean those factors *directly* caused'
              ' your score to increase or decrease (regression models cannot '
-             ' establish causation on their own!). '
+             ' establish causation on their own). '
              ' Specific recommendations '
              ' and additional context are listed below the figure.')
     coef_df = pd.DataFrame({
@@ -290,8 +382,8 @@ def get_recs():
     fig.update_layout(
         title='Contribution to Predicted Score',
         autosize=False,
-        width=500,
-        height=500,
+        width=600,
+        height=600,
         margin=go.layout.Margin(
             l=50,
             r=50,
@@ -299,6 +391,7 @@ def get_recs():
             t=100,
             pad=4
         ),
+        xaxis_title=f'Contribution to Predicted Value'
     )
     st.plotly_chart(fig)
 
@@ -361,7 +454,7 @@ def get_rates():
              ' score. Keep in'
              ' mind that does not necessarily mean those factors *directly* caused'
              ' your score to increase or decrease (regression models cannot '
-             ' establish causation on their own!). '
+             ' establish causation on their own). '
              ' Specific recommendations '
              ' and additional context are listed below the figure.')
     coef_df = pd.DataFrame({
@@ -390,8 +483,8 @@ def get_rates():
     fig.update_layout(
         title='Contribution to Predicted Score',
         autosize=False,
-        width=500,
-        height=500,
+        width=600,
+        height=600,
         margin=go.layout.Margin(
             l=50,
             r=50,
@@ -399,6 +492,7 @@ def get_rates():
             t=100,
             pad=4
         ),
+        xaxis_title=f'Contribution to Predicted Value'
     )
     st.plotly_chart(fig)
 
