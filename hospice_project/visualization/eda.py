@@ -60,7 +60,7 @@ plt.show()
 
 #%%
 sns.set(rc={'figure.figsize': (11.7, 8.27)})
-sns.set(font_scale=2)
+sns.set(font_scale=2.5)
 ddf = gdf[~gdf['would_recommend'].isna()]
 sns.distplot(ddf["would_recommend"], bins=20)
 plt.xlabel('Percent')

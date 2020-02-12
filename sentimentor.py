@@ -242,8 +242,6 @@ if main_view_type == 'Model Summary':
             st.image(image_wr, width=600)
         else:
             st.subheader("Senti-Mentor Insight Model")
-            st.write(f"Your facility's predicted family recommendation rate is "
-                     f"{round(ccn_recommend)}%")
             st.write("This regression model is designed to both predict ratings "
                      "and summarize actionable insights. Features were chosen "
                      "to maximize prediction and interpretation. Some main "
@@ -296,8 +294,6 @@ if main_view_type == 'Model Summary':
             st.image(image_er, width=600)
         else:
             st.subheader("Senti-Mentor Insight Model")
-            st.write(f"Your facility's predicted rating is "
-                     f"{round(ccn_est_rating)}.")
             st.write("This regression model is designed to both predict ratings "
                      "and summarize actionable insights. Features were chosen "
                      "to maximize prediction and interpretation. Some main "
